@@ -1,7 +1,7 @@
 import os
 import random
 import ctypes
-from PyQt5.QtWidgets import QApplication, QWidget, QLabel, QPushButton,QLineEdit
+from PyQt5.QtWidgets import QApplication, QWidget, QLabel, QPushButton,QSystemTrayIcon
 from PyQt5.QtGui import QPixmap, QFont ,QFontMetrics,QGuiApplication,QIcon
 from PyQt5 import QtCore, QtWidgets
 from PyQt5 import QtGui
@@ -12,7 +12,6 @@ import time
 import pynput.keyboard as pynput_keyboard
 import mouse
 import keyboard
-import importlib.util
 import shutil
 import socket
 def 发送打开次数():
@@ -60,6 +59,38 @@ def 路径修正(相对路径):
     if hasattr(sys, '_MEIPASS'):
         return os.path.join(sys._MEIPASS, 相对路径)
     return 相对路径
+#
+选项列表 = [
+    ("Doki Pipo☆Emotion", "奇迹般的访问数无限延伸",路径修正("文件/icon/1.ico")),
+    ("Tele-telepathy", "将一个又一个的点联结起来\n连成了线 然后变成了圆",路径修正("文件/icon/6.ico")),
+    ("Analogue Heart", "连接起来吧 Analogue Heart\n那最重要的 Analogue Heart",路径修正("文件/icon/1.ico")),
+    ("First Love Again", "晚霞染红了天空[今天]将迎来落幕\n我们又留下了什么呢 在意 却又无能为力",路径修正("文件/icon/3.ico"),),
+    ("私はマグネット","为了他人而做些什么 从前的自己想都没想过\n这对我来说是 奇迹的伟大的事情哟",路径修正("文件/icon/1.ico"),),
+    ("相连的Connect","现实中又没有[Ctrl]+[Z]\n自己来定义有些复杂呢",路径修正("文件/icon/5.ico"),),
+]
+随机标题, 随机信息,随机图标路径 = random.choice(选项列表)
+def 显示通知(标题, 信息, 图标路径):
+    # 创建一个应用程序对象
+    应用程序 = QApplication(sys.argv)
+
+    # 创建系统托盘图标对象
+    托盘图标 = QSystemTrayIcon()
+
+    # 检查图标路径是否存在
+    if 图标路径 and os.path.exists(图标路径):
+        托盘图标.setIcon(QIcon(图标路径))
+    else:
+        print(f"图标路径 '{图标路径}' 不存在，使用默认图标。")
+        托盘图标.setIcon(QIcon())  # 使用默认图标
+
+    # 设置通知消息
+    托盘图标.show()
+    托盘图标.showMessage(标题, 信息, QSystemTrayIcon.Information, 5000)  # 5000毫秒 = 5秒
+
+    # 使用 QTimer 关闭 QApplication 而不启动事件循环
+    QTimer.singleShot(1000, 应用程序.quit)  # 1秒后关闭 QApplication
+# 使用示例
+显示通知(随机标题, 随机信息, 随机图标路径)
 # 子窗口控件参数列表
 子窗口控件参数列表 = [
     ("文件/武斗赛.png", "自动记录", 3, 0, "自动记录秘卷通灵!"),

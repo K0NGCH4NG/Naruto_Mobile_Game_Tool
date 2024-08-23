@@ -12,7 +12,8 @@
 7.X轴范围显示  
 Bilibili:凤灯幽夜 (uid:11897940)  
 QQ交流群:548419960  
-![截图](http://github.com/K0NGCH4NG/Naruto_Mobile_Game_Tool/blob/main/截图.png)
+![截图](https://raw.githubusercontent.com/K0NGCH4NG/Naruto_Mobile_Game_Tool/main/截图.png)
+
 
 
 

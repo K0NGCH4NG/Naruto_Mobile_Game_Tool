@@ -1,15 +1,13 @@
 import logging
-
-import cv2
-import numpy as np
 import os
-import time
 import pickle
-import json
 import shutil
+import time
 from collections import defaultdict
 from concurrent.futures import ThreadPoolExecutor
 
+import cv2
+import numpy as np
 
 def cv_imread(file_path):
     """读取图像（支持中文路径）并转换为灰度图"""

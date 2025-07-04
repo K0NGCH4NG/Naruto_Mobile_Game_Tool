@@ -1,32 +1,29 @@
-import json
-import sys
-import os
-import shutil
-import random
 import ctypes
+import json
+import logging
+import os
+import random
+import shutil
+import socket
+import sys
 import time
 from typing import Dict
 
 import cv2
 import mouse
-import socket
-import logging
-from pynput import keyboard
-from PyQt6.QtWidgets import QApplication, QMainWindow, QWidget, QVBoxLayout, QPushButton, QLabel, QGraphicsOpacityEffect, QSystemTrayIcon
-from PyQt6.QtCore import Qt, QSize, QRect, QTimer, QThread, pyqtSignal
-from PyQt6.QtGui import QPixmap, QMovie, QGuiApplication, QColor, QFont, QPalette, QIcon
+from PyQt6.QtCore import Qt, QSize, QTimer, pyqtSignal
+from PyQt6.QtGui import QPixmap, QMovie, QColor, QFont, QPalette, QIcon
+from PyQt6.QtWidgets import QApplication, QWidget, QVBoxLayout, QPushButton, QLabel, QGraphicsOpacityEffect, QSystemTrayIcon, QMainWindow
 
-from StaticFunctions import resource_path, get_real_exe_path
-from utils.core.Bus import Bus
-# from utils.core.CountDown import CountDown
-from utils.core.KM_Monitor import KM_Monitor
-from utils.core.FightInformation import FightInformation
-from utils.core.LoggerConfig import setup_logging
-from utils.core.Screen import Screen
-
+from StaticFunctions import get_real_path
 from utils.FightInformationUpdate import FightInformationUpdate
 from utils.Judge import Judge
-from utils.UI_Update import UI_Update, create_rounded_pixmap
+from utils.UI_Update import UI_Update
+from utils.core.Bus import Bus
+from utils.core.FightInformation import FightInformation
+from utils.core.KM_Monitor import KM_Monitor
+from utils.core.LoggerConfig import setup_logging
+from utils.core.Screen import Screen
 
 FIGHT_INFORMATION_UPDATE_DONE = "FIGHT_INFORMATION_UPDATE_DONE"
 COUNTDOWN_EVENT = "COUNTDOWN_EVENT"
@@ -115,72 +112,7 @@ _load()
 
 def 召出内容(文件夹路径):
     try:
-        # 获取当前执行文件所在的目录
-        if getattr(sys, 'frozen', False):
-            # 如果是打包后的exe文件
-            脚本目录 = os.path.dirname(sys.executable)
-        else:
-            # 如果是普通的Python脚本
-            脚本目录 = os.path.dirname(os.path.abspath(__file__))
-
-        # 如果是相对路径，转换为基于脚本目录的绝对路径
-        if not os.path.isabs(文件夹路径):
-            源文件夹路径 = os.path.join(脚本目录, 文件夹路径)
-        else:
-            源文件夹路径 = 文件夹路径
-
-        # 检查源文件夹是否存在
-        if not os.path.exists(源文件夹路径) or not os.path.isdir(源文件夹路径):
-            print(f"错误：源文件夹 '{源文件夹路径}' 不存在")
-            return False
-
-        # 获取源文件夹中的所有内容
-        源文件夹内容 = os.listdir(源文件夹路径)
-
-        if not 源文件夹内容:
-            print("源文件夹为空，无需复制")
-            return False
-
-        # 检查脚本目录中是否已存在所有内容
-        已存在的项目 = []
-        for 项目 in 源文件夹内容:
-            目标项目路径 = os.path.join(脚本目录, 项目)
-            if os.path.exists(目标项目路径):
-                已存在的项目.append(项目)
-
-        if 已存在的项目:
-            print(f"以下项目已存在于目标位置，跳过复制：{', '.join(已存在的项目)}")
-            # 如果所有项目都已存在，则返回False
-            if len(已存在的项目) == len(源文件夹内容):
-                return False
-
-        # 复制文件夹内容到脚本目录
-        复制计数 = 0
-        for 项目 in 源文件夹内容:
-            源项目路径 = os.path.join(源文件夹路径, 项目)
-            目标项目路径 = os.path.join(脚本目录, 项目)
-
-            # 跳过已存在的项目
-            if os.path.exists(目标项目路径):
-                continue
-
-            if os.path.isdir(源项目路径):
-                # 如果是文件夹，使用copytree
-                shutil.copytree(源项目路径, 目标项目路径)
-                print(f"文件夹复制完成：{源项目路径} -> {目标项目路径}")
-            else:
-                # 如果是文件，使用copy2
-                shutil.copy2(源项目路径, 目标项目路径)
-                print(f"文件复制完成：{源项目路径} -> {目标项目路径}")
-
-            复制计数 += 1
-
-        if 复制计数 > 0:
-            print(f"总共复制了 {复制计数} 个项目到 {脚本目录}")
-            return True
-        else:
-            print("没有新项目需要复制")
-            return False
+        os.startfile(文件夹路径)
 
     except Exception as e:
         print(f"复制失败：{e}")
@@ -206,24 +138,24 @@ def 显示通知(标题, 信息, 图标路径):
 
 # 使用示例
 选项列表 = [
-    ("Doki Pipo☆Emotion", "奇迹般的访问数无限延伸", resource_path("文件/icon/1.ico")),
-    ("Tele-telepathy", "将一个又一个的点联结起来\n连成了线 然后变成了圆", resource_path("文件/icon/6.ico")),
+    ("Doki Pipo☆Emotion", "奇迹般的访问数无限延伸", get_real_path("files/icon/1.ico")),
+    ("Tele-telepathy", "将一个又一个的点联结起来\n连成了线 然后变成了圆", get_real_path("files/icon/6.ico")),
     ("Analogue Heart", "连接起来吧 Analogue Heart\n那最重要的 Analogue Heart",
-    resource_path("文件/icon/1.ico")),
+    get_real_path("files/icon/1.ico")),
     (
         "First Love Again",
         "晚霞染红了天空[今天]将迎来落幕\n我们又留下了什么呢 在意 却又无能为力",
-        resource_path("文件/icon/3.ico"),
+        get_real_path("files/icon/3.ico"),
     ),
     (
         "私はマグネット",
         "为了他人而做些什么 从前的自己想都没想过\n这对我来说是 奇迹的伟大的事情哟",
-        resource_path("文件/icon/1.ico"),
+        get_real_path("files/icon/1.ico"),
     ),
     (
         "相连的Connect",
         "现实中又没有[Ctrl]+[Z]\n自己来定义有些复杂呢",
-        resource_path("文件/icon/5.ico"),
+        get_real_path("files/icon/5.ico"),
     ),
 ]
 随机标题, 随机信息, 随机图标路径 = random.choice(选项列表)
@@ -250,7 +182,7 @@ class 根窗口(QMainWindow):
         # 创建UI引用字典
         self.ref_map = {}
         self.resolutions = {}
-        with open(f"{get_real_exe_path()}/config/Custom.json", 'r', encoding='utf-8') as f:
+        with open(get_real_path("config/Custom.json"), 'r', encoding='utf-8') as f:
             self.自定义设置 = json.load(f)
         super().__init__()
         setup_logging()
@@ -268,7 +200,7 @@ class 根窗口(QMainWindow):
 
     def load_resolutions(self):
         try:
-            with open(f"{get_real_exe_path()}/config/Resolutions.json",
+            with open(get_real_path("config/Resolutions.json"),
                       'r',
                       encoding='utf-8') as f:
                 self.resolutions = json.load(f)
@@ -292,7 +224,7 @@ class 根窗口(QMainWindow):
         self.setWindowFlag(Qt.WindowType.WindowStaysOnTopHint)
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
         self.setWindowFlags(self.windowFlags())
-        self.设置窗口图标随机(self, resource_path("文件/icon"))
+        self.设置窗口图标随机(self, get_real_path("files/icon"))
         # self.setStyleSheet("background: transparent;")
         self.setWindowOpacity(1.0)  # 80% 不透明
         # 设置窗口置顶
@@ -359,7 +291,7 @@ class 根窗口(QMainWindow):
         # 添加常驻标签
         self.创建常驻标签()
 
-        self.关于按钮 = self.按钮批量创建(self.自定义设置["关于按钮"], lambda: self.关于窗口(resource_path("文件/收款码2.png")))
+        self.关于按钮 = self.按钮批量创建(self.自定义设置["关于按钮"], lambda: self.关于窗口(get_real_path("files/收款码2.png")))
         self.设置按钮 = self.按钮批量创建(self.自定义设置["设置按钮"], self.SheZhiJieMian)
         self.左方按钮 = self.按钮批量创建(self.自定义设置["左方按钮"], lambda: self.添加倒计时标签(方位="左侧"))
         self.右方按钮 = self.按钮批量创建(self.自定义设置["右方按钮"], lambda: self.添加倒计时标签(方位="右侧"))
@@ -392,7 +324,7 @@ class 根窗口(QMainWindow):
         self.关于子窗口.setWindowTitle("关于本软件 -- 凤灯幽夜")
         # 创建主布局
         主布局 = QVBoxLayout(self.关于子窗口)
-        self.设置窗口图标随机(self.关于子窗口, resource_path("文件/icon"))
+        self.设置窗口图标随机(self.关于子窗口, get_real_path("files/icon"))
 
         # 定义文本内容列表（简化版）
         文本内容列表 = [
@@ -433,10 +365,10 @@ class 根窗口(QMainWindow):
                 self.设置界面 = QWidget()
                 self.设置界面.setWindowTitle("设置界面")
                 self.设置界面.setGeometry(*self.自定义设置["设置界面几何"])  # 子窗口位置和尺寸
-                self.设置窗口图标随机(self.设置界面, resource_path("文件/icon"))
+                self.设置窗口图标随机(self.设置界面, get_real_path("files/icon"))
                 self.宁次图片标签 = QLabel(self.设置界面)
                 self.宁次图片标签.setGeometry(*self.自定义设置["宁次标签几何"])
-                宁次基础图片 = QPixmap(resource_path("文件/柔拳法_忍战宁次.png"))
+                宁次基础图片 = QPixmap(get_real_path("files/柔拳法_忍战宁次.png"))
                 宁次修改图片 = 宁次基础图片.scaled(self.自定义设置["宁次标签图片大小"][0], self.自定义设置["宁次标签图片大小"][1],
                                                    Qt.AspectRatioMode.KeepAspectRatio,
                                                    Qt.TransformationMode.SmoothTransformation)
@@ -451,7 +383,7 @@ class 根窗口(QMainWindow):
 
                 self.模式切换标签 = QLabel(self.设置界面)
                 self.模式切换标签.setGeometry(*self.自定义设置["模式标签几何"])
-                模式切换基础图片 = QPixmap(resource_path("文件/决斗场设置.png"))
+                模式切换基础图片 = QPixmap(get_real_path("files/决斗场设置.png"))
                 模式切换修改图片 = 模式切换基础图片.scaled(
                     self.自定义设置["模式标签图片大小"][0], self.自定义设置["模式标签图片大小"][1],
                     Qt.AspectRatioMode.KeepAspectRatio,
@@ -492,10 +424,10 @@ class 根窗口(QMainWindow):
                     f"background-color: #FFFFFF;color: #693C71;font-size: {self.自定义设置['设置窗口字体大小']};border: {self.自定义设置['设置窗口边缘像素']} solid #693C71;"
                 )
                 self.范围显示按钮.clicked.connect(
-                    lambda: self.TuPianXianShi(QPixmap(resource_path("文件/X轴范围显示.png"))))
+                    lambda: self.TuPianXianShi(QPixmap(get_real_path("files/X轴范围显示.png"))))
                 self.范围显示标签 = QLabel(self.设置界面)
                 self.范围显示标签.setGeometry(*self.自定义设置["范围标签几何"])
-                范围显示基础图片 = QPixmap(resource_path("文件/范围显示.png"))
+                范围显示基础图片 = QPixmap(get_real_path("files/范围显示.png"))
                 范围显示修改图片 = 范围显示基础图片.scaled(
                     self.自定义设置["范围标签图片大小"][0], self.自定义设置["范围标签图片大小"][1],
                     Qt.AspectRatioMode.KeepAspectRatio,
@@ -538,7 +470,7 @@ class 根窗口(QMainWindow):
         self.教程窗口 = QWidget()
         self.教程窗口.setWindowTitle("教程窗口")
         self.教程窗口.setGeometry(400, 400, 800, 300)
-        self.设置窗口图标随机(self.教程窗口, resource_path("文件/icon"))
+        self.设置窗口图标随机(self.教程窗口, get_real_path("files/icon"))
         self.标签1 = QLabel("点击按钮召出文件夹,文件夹在软件同目录中", self.教程窗口)
         self.标签1.setGeometry(0, 0, 800, 60)
         self.标签1.setAlignment(Qt.AlignmentFlag.AlignLeft
@@ -572,7 +504,7 @@ class 根窗口(QMainWindow):
         self.按钮1.setStyleSheet(
             "font-family: 黑体; font-size: 40px; color: #A10000; border: 2px solid #A10000;"
         )
-        self.按钮1.clicked.connect(lambda: 召出内容(resource_path("文件/内嵌内容")))
+        self.按钮1.clicked.connect(lambda: 召出内容(get_real_path("")))
         告诫之文本 = 言语
         self.标签5 = QLabel(告诫之文本, self.教程窗口)
         self.标签5.setGeometry(800, 0, 800, 1080)
@@ -600,7 +532,7 @@ class 根窗口(QMainWindow):
             print(f"说明你选择了自己用的背景图片:{图片路径}")
         else:
             # 从打包内的文件/BG目录中选择随机图片
-            bg_路径 = resource_path("文件/BG")
+            bg_路径 = get_real_path("files/BG")
             if os.path.exists(bg_路径) and os.path.isdir(bg_路径):
                 图片路径 = self.获取随机图片(bg_路径)
             else:
@@ -732,7 +664,7 @@ class 根窗口(QMainWindow):
 
     def MoShiQieHuan(self):
         if self.fight_info.get_config("默认模式") == "决斗场":
-            模式切换基础图片 = QPixmap(resource_path("文件/训练营设置.png"))
+            模式切换基础图片 = QPixmap(get_real_path("files/训练营设置.png"))
             模式切换修改图片 = 模式切换基础图片.scaled(
                 self.自定义设置["模式标签图片大小"][0], self.自定义设置["模式标签图片大小"][1],
                 Qt.AspectRatioMode.KeepAspectRatio,
@@ -744,7 +676,7 @@ class 根窗口(QMainWindow):
             )
             self.fight_info.set_config("默认模式", "训练营")
         elif self.fight_info.get_config("默认模式") == "训练营":
-            模式切换基础图片 = QPixmap(resource_path("文件/决斗场设置.png"))
+            模式切换基础图片 = QPixmap(get_real_path("files/决斗场设置.png"))
             模式切换修改图片 = 模式切换基础图片.scaled(
                 self.自定义设置["模式标签图片大小"][0], self.自定义设置["模式标签图片大小"][1],
                 Qt.AspectRatioMode.KeepAspectRatio,

@@ -3,13 +3,13 @@ import logging
 import os
 import threading
 from typing import Dict, Any
-from StaticFunctions import get_real_exe_path
 
+from StaticFunctions import get_real_path
 
 class FightInformation:
     def __init__(self):
         self.logger = logging.getLogger(self.__class__.__name__)
-        self.config_path = f"{get_real_exe_path()}/config/Settings.json"
+        self.config_path = get_real_path("config/Settings.json")
 
         # 数据结构：key : { 'lock': Lock, 'data': value }
         # 此下皆是调试参数

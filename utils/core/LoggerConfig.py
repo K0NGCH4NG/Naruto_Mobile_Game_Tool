@@ -1,13 +1,12 @@
+import logging.config
 import logging
 import logging.config
 import os.path
-from logging.handlers import RotatingFileHandler
-
-from StaticFunctions import resource_path, get_real_exe_path
-import logging
 import time
+from logging.handlers import RotatingFileHandler
 from time import time_ns
 
+from StaticFunctions import get_real_path
 
 class LogRecord_ns(logging.LogRecord):
     def __init__(self, *args, **kwargs):
@@ -64,11 +63,11 @@ def setup_logging():
     root_logger.addHandler(console_handler)
 
     # 添加log文件处理器
-    if not os.path.exists(f"{get_real_exe_path()}\\log"):
-        os.makedirs(f"{get_real_exe_path()}\\log")
+    if not os.path.exists(get_real_path("log")):
+        os.makedirs(get_real_path("log"))
 
     file_handler = RotatingFileHandler(
-        f"{get_real_exe_path()}\\log\\天王寺科学忍具.log",
+        get_real_path("log/天王寺科学忍具.log"),
         maxBytes=5 * 1024 * 1024,  # 5MB
         backupCount=7,
         encoding='utf-8'

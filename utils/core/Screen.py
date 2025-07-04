@@ -1,24 +1,17 @@
-import concurrent.futures
+import ctypes
 import ctypes
 import logging
-import os
 import threading
 import time
-from ctypes import wintypes
-from datetime import datetime
 from typing import Dict
-import dxcam
+
 import cv2
+import dxcam
 import numpy as np
-import win32api
-import win32con
 import win32gui
+from PyQt6.QtCore import pyqtSlot, QThread, pyqtSignal, QWaitCondition, QMutex
 
-from PyQt6.QtCore import QTimer, pyqtSlot, QMetaObject, QThread, pyqtSignal, QWaitCondition, QMutex
-
-from StaticFunctions import get_real_exe_path, cv_save
 from utils.core.Bus import Bus
-from utils.core.FightInformation import FightInformation
 
 # 在顶部添加事件常量定义
 SCREEN_DONE = "SCREEN_DONE"

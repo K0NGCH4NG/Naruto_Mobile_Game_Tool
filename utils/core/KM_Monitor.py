@@ -1,9 +1,9 @@
 import logging
 import time
-from typing import Dict
-
-from pynput import keyboard, mouse
 from threading import Thread, Lock
+
+from pynput import keyboard
+
 from utils.core.Bus import Bus
 
 COUNTDOWN_EVENT = "COUNTDOWN_EVENT"

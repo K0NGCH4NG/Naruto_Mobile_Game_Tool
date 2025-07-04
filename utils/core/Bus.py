@@ -1,10 +1,6 @@
 import logging
-import os
 import threading
-from datetime import datetime
 from typing import Dict, Callable, List, Optional
-
-from PyQt6.QtCore import pyqtSignal
 
 # 定义事件类型常量
 SCREEN_DONE = "SCREEN_DONE"

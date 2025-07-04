@@ -138,6 +138,8 @@ class Screen:
             if self.hwnd == 0:
                 self.logger.debug("hwnd=0，窗口未找到")
                 self.bool_window_error = True
+                print("不存在符合要求的模拟器窗口，请打开模拟器",end="\r")
+                print(" "*100,end="\r")
                 # self.bus.publish(UI_UPDATE, {
                 #     'type': "WINDOW",
                 #     'text': "窗口：未找到",
@@ -149,17 +151,20 @@ class Screen:
             try:
                 if self.window_rect is None or (time.perf_counter() - self.last_find_window_rect) > 1:
                     self.window_rect = self.get_accurate_window_rect(self.hwnd)
+
                     self.logger.debug(f"窗口Rect：{self.window_rect},窗口大小：{self.window_rect[2] - self.window_rect[0]}x{self.window_rect[3] - self.window_rect[1]},分辨率：{self.resolution}")
                     self.last_find_window_rect = time.perf_counter()
                 left, top, right, bottom = self.window_rect
                 if (right - left) != self.resolution[0]:
                     # self.logger.debug(f"窗口宽度：{(right - left)}（预期：{self.resolution[0]}）")
                     self.bool_window_error = True
+                    print(f"游戏窗口现在宽度：{(right - left)},预期：{self.resolution[0]}",end="\r")
                     # self.bus.publish(UI_UPDATE, {
                     #     'type': "WINDOW",
                     #     'text': f"窗口宽度：{(right - left)}（预期：{self.resolution[0]}）",
                     #     'color': "red"
                     # })
+
                     self.bus.publish(SCREEN_DONE, {'screen': None})
                     return
                 screen_time = time.perf_counter()
@@ -167,6 +172,7 @@ class Screen:
                 # self.logger.debug(f"[截图耗时] {(time.perf_counter() - start) * 1000:.1f}ms")
                 if self.bool_window_error:
                     self.bool_window_error = False
+                    print(" "*100,end="\r")
                     # self.bus.publish(UI_UPDATE, {
                     #     'type': "WINDOW",
                     #     'text': f"当前分辨率：{self.resolution[0]}x{self.resolution[1]}",

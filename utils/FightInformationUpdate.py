@@ -22,7 +22,7 @@ FIGHT_STOP = "FIGHT_STOP"
 
 class FightInformationUpdate:
 
-    def __init__(self, bus: Bus):
+    def __init__(self, bus: Bus,fight_over_signal):
         self.logger = logging.getLogger(self.__class__.__name__)
         self.bus = bus  # 添加总线引用
         self.matcher = ImageMatch.from_cache(resource_path("src/model/IM.pkl"))
@@ -33,6 +33,7 @@ class FightInformationUpdate:
                            self.handle_check_identification_points)
         self.bus.subscribe(FIGHT_STOP, self.handle_fight_stop)
         self.executor = concurrent.futures.ThreadPoolExecutor(max_workers=4)
+        self.fight_over_signal=fight_over_signal
 
         # 定义模板
         # roi格式均为： (x1,x2,y1,y2)
@@ -444,3 +445,5 @@ class FightInformationUpdate:
         self.max_ougi_1p = 4
         self.max_ougi_2p = 4
         self.bus.publish(FIGHT_OVER)
+        self.fight_over_signal.emit({})
+

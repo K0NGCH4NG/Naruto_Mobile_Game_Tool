@@ -47,10 +47,6 @@ class UI_Update(QObject):
         stand_in_time_style = "font-family: 'Microsoft YaHei'; font-size: 40px; font-weight: bold;"
         update_type = data.get('type', '')
 
-        if update_type == "WINDOW":
-            self.ref_map.get("窗口").setText(f"{data.get("text")}")
-            self.ref_map.get("窗口").setStyleSheet(
-                f"font-family: 'SimHei';color: {data.get("color")};background-color: #f0f0f0;font-size: 16px;")
         if update_type == "JUDGE":
             # self.logger.debug(f"识别到判断事件：{data}")
             dic = data.get("fight_info", {})
@@ -59,23 +55,6 @@ class UI_Update(QObject):
             # 更新奥义点显示
             左右标签更新(self.ref_map["常驻标签左"], self._ougi_str(1, dic.get("1P奥义点")))
             左右标签更新(self.ref_map["常驻标签右"], self._ougi_str(2, dic.get("2P奥义点")))
-
-        if update_type == "COUNTDOWN":
-            dics = data.get("timer_infos", {})
-            for key, remaining in dics.items():
-                color = "red" if 0 < remaining <= 3 else "black"
-                if key == "1P替身时间":
-                    # 更新 1P 替身时间
-                    self.ref_map.get("1P替身时间").setText(f"1P : {remaining:.2f}")
-                    self.ref_map.get("1P替身时间").setStyleSheet(stand_in_time_style + f"color: {color};")
-                elif key == "2P替身时间":
-                    # 更新 2P 替身时间
-                    self.ref_map.get("2P替身时间").setText(f"2P : {remaining:.2f}")
-                    self.ref_map.get("2P替身时间").setStyleSheet(stand_in_time_style + f"color: {color};")
-                elif key == "用户自定义倒计时":
-                    # 更新 用户自定义倒计时
-                    self.ref_map.get("用户自定义倒计时").setText(f"{remaining:.2f}")
-                    self.ref_map.get("用户自定义倒计时").setStyleSheet(stand_in_time_style + f"color: {color};")
 
         if update_type == "SECRET_SCROLL":
             dic = data.get('secret_scrolls')

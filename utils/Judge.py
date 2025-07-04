@@ -17,14 +17,14 @@ JUDGE_START = "JUDGE_START"
 FIGHT_OVER = "FIGHT_OVER"
 JUDGE_DONE = "JUDGE_DONE"
 
-
 class Judge:
-    def __init__(self, bus: Bus, fight_info: FightInformation):
+    def __init__(self, bus: Bus, fight_info: FightInformation, countdown_signal=None):
         self.logger = logging.getLogger(self.__class__.__name__)
         self.bus = bus
         self.fight_info = fight_info
         self.judge_times = (0.3, 0.23)  # 第一个是奥义点数量下降的判断时间，第二个是奥义点数量上升的判断时间
         self.executor = concurrent.futures.ThreadPoolExecutor(max_workers=2)
+        self.countdown_signal = countdown_signal
         self.ougi_judge_dic = {
             "1P奥义点": None,
             "1P开始判断标志": False,
@@ -46,10 +46,9 @@ class Judge:
         }
         # 订阅事件
         self.bus.subscribe(JUDGE_START, self.handle_judge_start)
-        self.bus.subscribe(FIGHT_OVER, self.handle_fight_over)
         self.logger.debug(f"初始化完成...")
 
-    def handle_judge_start(self, data: Dict):
+    def handle_judge_start(self, data: Dict, ):
         # 使用线程避免阻塞事件循环
         threading.Thread(target=self._judge, args=(data,), daemon=True).start()
 
@@ -90,7 +89,7 @@ class Judge:
             futures = [self.executor.submit(self._judge_single, 1, ougis), self.executor.submit(self._judge_single, 2, ougis)]
             concurrent.futures.wait(futures)
             self.bus.publish(JUDGE_DONE)
-            self.logger.debug(f"JUDGE成功判断")
+            # self.logger.debug(f"JUDGE成功判断")
             self.bus.publish(UI_UPDATE, {
                 'type': 'JUDGE',
                 'fight_info': data
@@ -126,19 +125,20 @@ class Judge:
             if self.ougi_judge_dic[f"{player_key}待判断时间"] - self.ougi_judge_dic[f"{player_key}替身时刻"] > self.judge_times[self.ougi_judge_dic[f"{player_key}方向"]]:
                 trigger_time = self.ougi_judge_dic[f"{player_key}替身时刻"]
                 try:
-
                     if trigger_time and self.ougi_judge_dic[f"{player_key}奥义点"] - self.ougi_judge_dic[f"{player_key}待判断奥义点"] in [1]:
                         end_time = time.perf_counter()
                         if self.ougi_judge_dic[f"{player_key}倒计时触发时刻"] is None or end_time - self.ougi_judge_dic[f"{player_key}倒计时触发时刻"] > 1:
                             self.ougi_judge_dic[f"{player_key}倒计时触发时刻"] = trigger_time
                             # 发布替身事件
-                            self.bus.publish(COUNTDOWN_EVENT, {
-                                'type': "START",
-                                'target': f'{player_key}替身时间',
-                                'time': 15.00,
-                                'add': 0.10,
-                                'time_perf': trigger_time
-                            })
+                            self.countdown_signal.emit(
+                                {
+                                    'type': "START",
+                                    'target': f'{"左" if player_key == "1P" else "右"}侧',
+                                    'time': 15.00,
+                                    'add': -0.20,
+                                    'time_perf': trigger_time
+                                }
+                            )
                             self.logger.info(f"[{player_key}] 替身")
                         else:
                             self.logger.debug(f"距离上次触发不到1秒:{end_time - self.ougi_judge_dic[f"{player_key}倒计时触发时刻"]}")

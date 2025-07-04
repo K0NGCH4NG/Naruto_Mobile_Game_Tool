@@ -4,6 +4,9 @@ import os
 import shutil
 import random
 import ctypes
+import time
+from typing import Dict
+
 import cv2
 import mouse
 import socket
@@ -26,10 +29,11 @@ from utils.Judge import Judge
 from utils.UI_Update import UI_Update, create_rounded_pixmap
 
 FIGHT_INFORMATION_UPDATE_DONE = "FIGHT_INFORMATION_UPDATE_DONE"
+COUNTDOWN_EVENT = "COUNTDOWN_EVENT"
+FIGHT_OVER = "FIGHT_OVER"
 
 os.environ["QT_LOGGING_RULES"] = "qt.qpa.window.warning=false"
 print("本软件版本为V4.8.0")
-
 
 def 发送打开次数():
     """
@@ -61,9 +65,7 @@ def 发送打开次数():
         # 关闭客户端socket
         客户端.close()
 
-
 发送打开次数()
-
 
 def 强行设置DPI():
     """最强力的 DPI 设置"""
@@ -91,12 +93,10 @@ def 强行设置DPI():
             except:
                 pass
 
-
 # 在创建 QApplication 之前调用
 强行设置DPI()
 
 言语 = "1"
-
 
 def _load():
     try:
@@ -111,9 +111,7 @@ def _load():
     except:
         pass
 
-
 _load()
-
 
 def 加载配置():
     # 获取当前执行文件的目录
@@ -132,9 +130,7 @@ def 加载配置():
     else:
         print("常规启动")
 
-
 加载配置()
-
 
 def 召出内容(文件夹路径):
     try:
@@ -209,7 +205,6 @@ def 召出内容(文件夹路径):
         print(f"复制失败：{e}")
         return False
 
-
 def 显示通知(标题, 信息, 图标路径):
     # 创建一个应用程序对象
     应用程序 = QApplication(sys.argv)
@@ -228,13 +223,12 @@ def 显示通知(标题, 信息, 图标路径):
     # 使用 QTimer 关闭 QApplication 而不启动事件循环
     QTimer.singleShot(1000, 应用程序.quit)  # 1秒后关闭 QApplication
 
-
 # 使用示例
 选项列表 = [
     ("Doki Pipo☆Emotion", "奇迹般的访问数无限延伸", resource_path("文件/icon/1.ico")),
     ("Tele-telepathy", "将一个又一个的点联结起来\n连成了线 然后变成了圆", resource_path("文件/icon/6.ico")),
     ("Analogue Heart", "连接起来吧 Analogue Heart\n那最重要的 Analogue Heart",
-     resource_path("文件/icon/1.ico")),
+    resource_path("文件/icon/1.ico")),
     (
         "First Love Again",
         "晚霞染红了天空[今天]将迎来落幕\n我们又留下了什么呢 在意 却又无能为力",
@@ -268,8 +262,9 @@ print("""
 软件作者:凤灯幽夜
 """)
 
-
 class 根窗口(QMainWindow):
+    countdown_signal = pyqtSignal(dict)  # 传递一个字典参数
+    fight_over_signal = pyqtSignal(dict)
 
     def __init__(self):
         # 创建UI引用字典
@@ -295,15 +290,15 @@ class 根窗口(QMainWindow):
             "关于按钮":
                 (1.0, "关于", (0, 120, 50, 30), "#FFFFFF", "#000000", "18px", "bold", "0px"),
             "设置按钮": (1.0, "设置", (50, 120, 50, 30), "#FFFE6C", "#000000", "18px",
-                         "bold", "0px"),
+            "bold", "0px"),
             "左方按钮": (1.0, "左方", (100, 120, 50, 30), "#7CDFEC", "#000000", "18px",
-                         "bold", "0px"),
+            "bold", "0px"),
             "右方按钮": (1.0, "右方", (150, 120, 50, 30), "#E06582", "#000000", "18px",
-                         "bold", "0px"),
+            "bold", "0px"),
             "关闭按钮": (1.0, "关闭", (200, 120, 50, 30), "#A285DD", "#000000", "18px",
-                         "bold", "0px"),
+            "bold", "0px"),
             "教程按钮": (1.0, "教程", (250, 120, 50, 30), "#83FF80", "#000000", "18px",
-                         "bold", "0px"),
+            "bold", "0px"),
             # 倒计时标签设置
             "倒计时透明度":
                 1.0,
@@ -433,6 +428,8 @@ class 根窗口(QMainWindow):
     def init_core_components(self):
         """初始化核心组件"""
         # 初始化各个组件
+        self.countdown_signal.connect(self.handle_count_down)
+        self.fight_over_signal.connect(self.handle_fight_over)
         self.bus = Bus()
         self.monitor = KM_Monitor(self.bus)
         self.monitor.start()
@@ -441,12 +438,23 @@ class 根窗口(QMainWindow):
         self.screen.screen_interval = self.fight_info.get_config("默认截图间隔")
         self.screen.find_windows = self.fight_info.get_config("查找窗口")
         self.screen.resolution = [1600, 900]
-        self.fight_info_update = FightInformationUpdate(self.bus)
+        self.fight_info_update = FightInformationUpdate(self.bus, self.fight_over_signal)
         self.fight_info_update.fight_status_templates = self.resolutions["1600x900"]["fight_status_templates"]
         self.fight_info_update.roi_dic = self.resolutions["1600x900"]["roi_dic"]
         self.fight_info_update.preprocess_templates()
-        self.judge = Judge(self.bus, self.fight_info)
+        self.judge = Judge(self.bus, self.fight_info, self.countdown_signal)
+
         # self.count_down = CountDown(self.bus, self.fight_info)
+
+    def handle_count_down(self, data: Dict):
+        self.logger.debug(f"接收倒计时事件：{data}")
+        try:
+            self.添加倒计时标签(data.get("target"), data.get("time_perf"), data.get("time") + data.get("add"))
+        except Exception as e:
+            self.logger.error(f"添加倒计时标签出错：{e}")
+
+    def handle_fight_over(self, data: Dict):
+        self.清空所有倒计时标签()
 
     def init_ui(self):
         """创建用户界面"""
@@ -507,17 +515,17 @@ class 根窗口(QMainWindow):
         # 定义文本内容列表（简化版）
         文本内容列表 = [
             ('<span style="color: #72E692;">唯一作者ID:</span> <span style="color: #000000;">凤灯幽夜</span>',
-             20),
+            20),
             ('<span style="color: #E672C6;">Bili_Uid:</span> <span style="color: #000000;">11898940</span>',
-             20),
+            20),
             ('<span style="color: #45B7D1;">讨论群:</span> <span style="color: #000000;">548419960</span>',
-             20),
+            20),
             ('<span style="color: #9B59B6;">版本:</span> <span style="color: #000000;">V4.8.0</span>',
-             20),
+            20),
             ('<span style="color: #009C94;">Lofter/Pixiv:</span> <span style="color: #000000;">凤灯幽夜</span>',
-             20),
+            20),
             ('<span style="color: #FFA04A;">特别鸣谢,自软件发布以来259天的唯一打赏:</span> <span style="color: #FFA04A;">来自[咖啡豆浆]的[20元]</span>',
-             20)
+            20)
         ]
 
         # 批量创建并添加文本标签
@@ -619,7 +627,7 @@ class 根窗口(QMainWindow):
         else:
             self.设置界面.show()  # 如果窗口不可见，则显示
 
-    def 添加倒计时标签(self, 方位="左侧"):
+    def 添加倒计时标签(self, 方位, trigger_time=None, duration=0):
         try:
             # 根据方位选择对应的倒计时列表和初始位置
             if 方位 == "左侧":
@@ -630,10 +638,13 @@ class 根窗口(QMainWindow):
                 初始位置 = self.右侧初始位置
             # 计算新标签的位置
             生成位置 = self.计算新标签位置(倒计时列表, 初始位置)
-            # 创建新的倒计时标签
-            self.设置倒计时(倒计时秒数=self.fight_info.get_config("倒计时秒数"), 生成位置=生成位置, 方位=方位)
         except Exception as e:
-            self.logger.error(f"{e}")
+            self.logger.error(f"计算位置出错：{e}")
+        try:
+            # 创建新的倒计时标签
+            self.设置倒计时(倒计时触发时间=trigger_time, 倒计时总数=duration, 生成位置=生成位置, 方位=方位)
+        except Exception as e:
+            self.logger.error(f"设置倒计时出错：{e}")
 
     @staticmethod
     def 终章():
@@ -943,7 +954,7 @@ class 根窗口(QMainWindow):
         self.ref_map["常驻标签左"].setAutoFillBackground(True)
         # 设置左侧标签文本对齐方式
         self.ref_map["常驻标签左"].setAlignment(Qt.AlignmentFlag.AlignLeft
-                                     | Qt.AlignmentFlag.AlignVCenter)
+                                                | Qt.AlignmentFlag.AlignVCenter)
         # 设置透明度
         常驻标签左透明效果 = QGraphicsOpacityEffect()
         常驻标签左透明效果.setOpacity(透明度)
@@ -961,7 +972,7 @@ class 根窗口(QMainWindow):
         self.ref_map["常驻标签右"].setAutoFillBackground(True)
         # 设置右侧标签文本对齐方式
         self.ref_map["常驻标签右"].setAlignment(Qt.AlignmentFlag.AlignRight
-                                     | Qt.AlignmentFlag.AlignVCenter)
+                                                | Qt.AlignmentFlag.AlignVCenter)
         # 设置透明度
         常驻标签右透明效果 = QGraphicsOpacityEffect()
         常驻标签右透明效果.setOpacity(透明度)
@@ -992,8 +1003,7 @@ class 根窗口(QMainWindow):
             if 新位置 not in 已占用位置:
                 return 新位置
 
-    def 设置倒计时(self, 倒计时秒数, 生成位置=None, 方位="左侧"):
-
+    def 设置倒计时(self, 倒计时触发时间, 倒计时总数, 生成位置=None, 方位="左侧"):
         字体 = self.自定义设置["倒计时字体"]
         字号 = self.自定义设置["倒计时字号"]
         背景颜色 = self.自定义设置["倒计时背景色"]
@@ -1041,39 +1051,59 @@ class 根窗口(QMainWindow):
         整体透明效果 = QGraphicsOpacityEffect()
         整体透明效果.setOpacity(透明度)  # 设置透明度 (0.0 完全透明，1.0 完全不透明)
         新倒计时标签.setGraphicsEffect(整体透明效果)
-
-        # 初始化倒计时时间
-        剩余时间 = 倒计时秒数
-        # print(f"{剩余时间:.1f}")
-        新倒计时标签.setText(f"{剩余时间:.1f}")
-        新倒计时标签.show()
-
         # 为这个特定的倒计时创建一个计时器
         计时器 = QTimer(self)
-        计时器.setInterval(100)  # 100毫秒间隔
-
-        # 创建一个闭包函数来更新这个特定的倒计时
-        def 更新这个倒计时():
-            nonlocal 剩余时间
-            剩余时间 -= 0.1
-            剩余时间 = round(剩余时间, 1)
+        计时器.setInterval(50)  # 100毫秒间隔
+        # 初始化倒计时时间
+        if 倒计时触发时间:
+            剩余时间 = 倒计时总数 - (time.perf_counter() - 倒计时触发时间)
+            # print(f"{剩余时间:.1f}")
             新倒计时标签.setText(f"{剩余时间:.1f}")
+            新倒计时标签.show()
 
-            if 剩余时间 <= 0:
-                计时器.stop()
-                新倒计时标签.setText("0.0")
-                # 延迟删除标签
-                删除计时器 = QTimer(self)
-                删除计时器.setSingleShot(True)
-                删除计时器.timeout.connect(lambda: self.删除倒计时标签(新倒计时标签, 方位))
-                删除计时器.start(100)  # 0.1秒后删除
+            # 创建一个闭包函数来更新这个特定的倒计时
+            def 更新这个倒计时():
+                nonlocal 倒计时触发时间
+                剩余时间 = 倒计时总数 - (time.perf_counter() - 倒计时触发时间)
+                新倒计时标签.setText(f"{剩余时间:.1f}")
+                if 剩余时间 <= 0:
+                    计时器.stop()
+                    新倒计时标签.setText("0.0")
+                    # 延迟删除标签
+                    删除计时器 = QTimer(self)
+                    删除计时器.setSingleShot(True)
+                    删除计时器.timeout.connect(lambda: self.删除倒计时标签(新倒计时标签, 方位))
+                    删除计时器.start(100)  # 0.1秒后删除
 
-        # 连接计时器信号到更新函数
-        计时器.timeout.connect(更新这个倒计时)
+            # 连接计时器信号到更新函数
+            计时器.timeout.connect(更新这个倒计时)
+        else:
+            剩余时间 = self.fight_info.get_config("倒计时秒数")
 
+            # print(f"{剩余时间:.1f}")
+            新倒计时标签.setText(f"{剩余时间:.1f}")
+            新倒计时标签.show()
+
+            # 创建一个闭包函数来更新这个特定的倒计时
+            def 更新这个倒计时():
+                nonlocal 剩余时间
+                剩余时间 -= 0.1
+                剩余时间 = round(剩余时间, 1)
+                新倒计时标签.setText(f"{剩余时间:.1f}")
+
+                if 剩余时间 <= 0:
+                    计时器.stop()
+                    新倒计时标签.setText("0.0")
+                    # 延迟删除标签
+                    删除计时器 = QTimer(self)
+                    删除计时器.setSingleShot(True)
+                    删除计时器.timeout.connect(lambda: self.删除倒计时标签(新倒计时标签, 方位))
+                    删除计时器.start(100)  # 0.1秒后删除
+
+            # 连接计时器信号到更新函数
+            计时器.timeout.connect(更新这个倒计时)
         # 启动计时器
         计时器.start()
-
         # 将新创建的标签和计时器存储在对应的列表中
         倒计时列表.append((新倒计时标签, 计时器, 生成位置, 标签大小))
 
@@ -1091,7 +1121,6 @@ class 根窗口(QMainWindow):
                 break
 
     def 清空所有倒计时标签(self, 方位=None):
-
         def 清空指定方位(倒计时列表):
             """清空指定方位的所有倒计时标签"""
             # 从后往前遍历，避免删除时索引变化的问题
@@ -1134,7 +1163,6 @@ class 根窗口(QMainWindow):
             self.拖动位置 = None
             事件.accept()
 
-
 def 触发_左键短按(坐标):
     mouse.move(坐标[0], 坐标[1])
     mouse.press(button='left')
@@ -1146,7 +1174,6 @@ def 触发_左键短按(坐标):
 
     # 设置单次触发的定时器，200毫秒后释放鼠标
     QTimer.singleShot(200, 释放鼠标)
-
 
 if __name__ == "__main__":
     应用 = QApplication(sys.argv)

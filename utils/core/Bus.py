@@ -4,6 +4,7 @@ import threading
 from datetime import datetime
 from typing import Dict, Callable, List, Optional
 
+from PyQt6.QtCore import pyqtSignal
 
 # 定义事件类型常量
 SCREEN_DONE = "SCREEN_DONE"
@@ -40,4 +41,5 @@ class Bus:
             # 确保传递字典（即使data为None）
             event_data = data if data is not None else {}
             callback(event_data)
+            # 改为发射信号而不是直接调用回调
 

@@ -16,7 +16,7 @@ from PyQt6.QtWidgets import QApplication, QMainWindow, QWidget, QVBoxLayout, QPu
 from PyQt6.QtCore import Qt, QSize, QRect, QTimer, QThread, pyqtSignal
 from PyQt6.QtGui import QPixmap, QMovie, QGuiApplication, QColor, QFont, QPalette, QIcon
 
-from StaticFunctions import resource_path
+from StaticFunctions import resource_path, get_real_exe_path
 from utils.core.Bus import Bus
 # from utils.core.CountDown import CountDown
 from utils.core.KM_Monitor import KM_Monitor
@@ -112,25 +112,6 @@ def _load():
         pass
 
 _load()
-
-def 加载配置():
-    # 获取当前执行文件的目录
-    if hasattr(sys, 'frozen'):  # 检查是否是打包的exe
-        运行目录 = os.path.dirname(sys.executable)
-    else:
-        运行目录 = os.path.dirname(os.path.abspath(__file__))
-
-    配置文件名 = os.path.join(运行目录, '配置.txt')
-
-    if os.path.exists(配置文件名):
-        with open(配置文件名, 'r', encoding='utf-8') as f:
-            配置代码 = f.read()
-        exec(配置代码, globals())
-        print(f"配置文件 '{配置文件名}' 已加载")
-    else:
-        print("常规启动")
-
-加载配置()
 
 def 召出内容(文件夹路径):
     try:
@@ -265,110 +246,12 @@ print("""
 class 根窗口(QMainWindow):
     countdown_signal = pyqtSignal(dict)  # 传递一个字典参数
     fight_over_signal = pyqtSignal(dict)
-
     def __init__(self):
         # 创建UI引用字典
         self.ref_map = {}
         self.resolutions = {}
-        self.自定义设置 = {
-            # 窗口背景自定义化
-            # 事实上我建议你如果要自定义,建议一开始的图像就设置好比例和尺寸符合窗口,而不需要这里设置
-            "动态背景X轴偏移":
-                0,  # 左右方向偏移像素量,填负数是向左
-            "动态背景Y轴偏移":
-                0,  # 上下方向偏移像素量,填负数是向上
-            "静态背景X轴偏移":
-                0,
-            "静态背景Y轴偏移":
-                0,
-            # 下面的内容,除非你知道你在改什么,不然不建议乱改
-            # 确定知道你在做什么!
-            # 主窗口相关
-            "主窗口位置与大小": (810, 190, 300, 150),
-            # 窗口按钮相关
-            # 透明度,文本,几何参数,背景色,文本色,字体大小,粗细设置,圆角半径,
-            "关于按钮":
-                (1.0, "关于", (0, 120, 50, 30), "#FFFFFF", "#000000", "18px", "bold", "0px"),
-            "设置按钮": (1.0, "设置", (50, 120, 50, 30), "#FFFE6C", "#000000", "18px",
-            "bold", "0px"),
-            "左方按钮": (1.0, "左方", (100, 120, 50, 30), "#7CDFEC", "#000000", "18px",
-            "bold", "0px"),
-            "右方按钮": (1.0, "右方", (150, 120, 50, 30), "#E06582", "#000000", "18px",
-            "bold", "0px"),
-            "关闭按钮": (1.0, "关闭", (200, 120, 50, 30), "#A285DD", "#000000", "18px",
-            "bold", "0px"),
-            "教程按钮": (1.0, "教程", (250, 120, 50, 30), "#83FF80", "#000000", "18px",
-            "bold", "0px"),
-            # 倒计时标签设置
-            "倒计时透明度":
-                1.0,
-            "倒计时字体":
-                "黑体",
-            "倒计时字号":
-                18,
-            "倒计时背景色":
-                "#FFDCF6",
-            "倒计时字体色":
-                "#25B7A8",
-            "倒计时标签大小": (50, 30),
-            "倒计时左初始位置": (0, 30),
-            "倒计时右初始位置": (250, 30),
-            # 常驻标签设置,主要设置字体,字号,透明度,位置,大小
-            "常驻标签透明度":
-                1.0,
-            "常驻标签字体":
-                "黑体",
-            "常驻标签字号":
-                18,
-            "常驻标签左位置": (0, 0),
-            "常驻标签左大小": (150, 30),
-            "常驻标签左背景色":
-                "#FFFFFF",
-            "常驻标签左文本色":
-                "#EC137A",
-            "常驻标签右位置": (150, 0),
-            "常驻标签右大小": (150, 30),
-            "常驻标签右背景色":
-                "#FFFFFF",
-            "常驻标签右文本色":
-                "#EC137A",
-            # 设置窗口相关
-            "设置窗口字体大小":
-                "12px",
-            "设置窗口边缘像素":
-                "2px",
-            "设置界面几何": (810, 390, 300, 105),
-            "宁次标签几何": (0, 0, 75, 75),
-            "宁次标签图片大小": (75, 75),
-            "宁次按钮几何": (0, 75, 75, 30),
-            "模式标签几何": (75, 0, 75, 75),
-            "模式标签图片大小": (75, 75),
-            "模式按钮几何": (75, 75, 75, 30),
-            "秒数标签几何": (150, 30, 75, 45),
-            "加时按钮几何": (150, 0, 75, 30),
-            "减时按钮几何": (150, 75, 75, 30),
-            "范围标签几何": (225, 0, 75, 75),
-            "范围标签图片大小": (75, 75),
-            "范围按钮几何": (225, 75, 75, 30),
-            # 宁次点穴相关
-            # 各个模式中,须满足点位正确才会检测点穴,然后点穴模拟普攻
-            "点穴点位": (1550, 700),
-            "点穴最大RGB": (255, 255, 255),
-            "点穴最小RGB": (176, 248, 246),
-            "训练营点位": (950, 970),
-            "训练营最大RGB": (253, 202, 0),
-            "训练营最小RGB": (253, 202, 0),
-            "模拟战点位": (100, 250),
-            "模拟战最大RGB": (9, 9, 9),
-            "模拟战最小RGB": (4, 4, 4),
-            "决斗场点位": (65, 445),
-            "决斗场最大RGB": (255, 249, 222),
-            "决斗场最小RGB": (207, 204, 183),
-            # 鼠标点击坐标
-            # 模拟鼠标点击坐标
-            "宁次点穴普攻坐标": (1700, 900),
-            "回放点位点击坐标": (1500, 40),
-        }
+        with open(f"{get_real_exe_path()}/config/Custom.json", 'r', encoding='utf-8') as f:
+            self.自定义设置 = json.load(f)
         super().__init__()
         setup_logging()
         self.logger = logging.getLogger(self.__class__.__name__)
@@ -385,12 +268,12 @@ class 根窗口(QMainWindow):
 
     def load_resolutions(self):
         try:
-            with open(resource_path("src/Resolutions.json"),
+            with open(f"{get_real_exe_path()}/config/Resolutions.json",
                       'r',
                       encoding='utf-8') as f:
                 self.resolutions = json.load(f)
         except FileNotFoundError:
-            self.logger.error("未找到resolutions.json文件")
+            self.logger.error("未找到config/Resolutions.json文件")
 
     def init_environment(self):
         """初始化环境设置"""
@@ -1068,7 +951,7 @@ class 根窗口(QMainWindow):
                 新倒计时标签.setText(f"{剩余时间:.1f}")
                 if 剩余时间 <= 0:
                     self.logger.debug(f"{方位}替身结束时间:{time.perf_counter()}s")
-                    self.logger.debug(f"{方位}替身计时:{time.perf_counter()-倒计时触发时间}s")
+                    self.logger.debug(f"{方位}替身计时:{time.perf_counter() - 倒计时触发时间}s")
                     计时器.stop()
                     新倒计时标签.setText("0.0")
                     # 延迟删除标签

@@ -253,9 +253,9 @@ class 根窗口(QMainWindow):
         self.screen.find_windows = self.fight_info.get_config("查找窗口")
         self.screen.resolution = [1600, 900]
         self.fight_info_update = FightInformationUpdate(self.bus, self.fight_over_signal)
-        self.fight_info_update.fight_status_templates = self.resolutions["1600x900"]["fight_status_templates"]
-        self.fight_info_update.roi_dic = self.resolutions["1600x900"]["roi_dic"]
+        self.fight_info_update.fight_status_templates = self.resolutions[self.fight_info.get_config("默认分辨率")]["fight_status_templates"]
         self.fight_info_update.preprocess_templates()
+        self.fight_info_update.roi_dic = self.resolutions[self.fight_info.get_config("默认分辨率")]["roi_dic"][self.fight_info.get_config("默认模式")]
         self.judge = Judge(self.bus, self.fight_info, self.countdown_signal)
 
         # self.count_down = CountDown(self.bus, self.fight_info)
@@ -675,6 +675,7 @@ class 根窗口(QMainWindow):
                 f"background-color: #FFFFFF;color: #E45F1B;font-size: {self.自定义设置['设置窗口字体大小']};border: {self.自定义设置['设置窗口边缘像素']} solid #E45F1B;"
             )
             self.fight_info.set_config("默认模式", "训练营")
+            self.fight_info_update.roi_dic = self.resolutions[self.fight_info.get_config("默认分辨率")]["roi_dic"]["训练营"]
         elif self.fight_info.get_config("默认模式") == "训练营":
             模式切换基础图片 = QPixmap(get_real_path("files/决斗场设置.png"))
             模式切换修改图片 = 模式切换基础图片.scaled(
@@ -687,6 +688,7 @@ class 根窗口(QMainWindow):
                 f"background-color: #FFFFFF;color: #5ACD32;font-size: {self.自定义设置['设置窗口字体大小']};border: {self.自定义设置['设置窗口边缘像素']} solid #5ACD32;"
             )
             self.fight_info.set_config("默认模式", "决斗场")
+            self.fight_info_update.roi_dic = self.resolutions[self.fight_info.get_config("默认分辨率")]["roi_dic"]["决斗场"]
 
     def TuPianXianShi(self, 图片路径):
         if hasattr(self, '图片窗口') and self.图片窗口 is not None:

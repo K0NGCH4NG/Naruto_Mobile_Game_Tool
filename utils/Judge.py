@@ -135,7 +135,7 @@ class Judge:
                                     'type': "START",
                                     'target': f'{"左" if player_key == "1P" else "右"}侧',
                                     'time': 15.00,
-                                    'add': -0.20,
+                                    'add': -0.15,
                                     'time_perf': trigger_time
                                 }
                             )

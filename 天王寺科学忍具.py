@@ -364,7 +364,6 @@ class 根窗口(QMainWindow):
             "决斗场点位": (65, 445),
             "决斗场最大RGB": (255, 249, 222),
             "决斗场最小RGB": (207, 204, 183),
-
             # 鼠标点击坐标
             # 模拟鼠标点击坐标
             "宁次点穴普攻坐标": (1700, 900),
@@ -1004,6 +1003,7 @@ class 根窗口(QMainWindow):
                 return 新位置
 
     def 设置倒计时(self, 倒计时触发时间, 倒计时总数, 生成位置=None, 方位="左侧"):
+        self.logger.debug(f"{方位}替身触发时间:{倒计时触发时间}s,总时间：{倒计时总数}s")
         字体 = self.自定义设置["倒计时字体"]
         字号 = self.自定义设置["倒计时字号"]
         背景颜色 = self.自定义设置["倒计时背景色"]
@@ -1067,6 +1067,8 @@ class 根窗口(QMainWindow):
                 剩余时间 = 倒计时总数 - (time.perf_counter() - 倒计时触发时间)
                 新倒计时标签.setText(f"{剩余时间:.1f}")
                 if 剩余时间 <= 0:
+                    self.logger.debug(f"{方位}替身结束时间:{time.perf_counter()}s")
+                    self.logger.debug(f"{方位}替身计时:{time.perf_counter()-倒计时触发时间}s")
                     计时器.stop()
                     新倒计时标签.setText("0.0")
                     # 延迟删除标签

@@ -15,10 +15,10 @@ from PyQt6.QtCore import Qt, QSize, QTimer, pyqtSignal
 from PyQt6.QtGui import QPixmap, QMovie, QColor, QFont, QPalette, QIcon
 from PyQt6.QtWidgets import QApplication, QWidget, QVBoxLayout, QPushButton, QLabel, QGraphicsOpacityEffect, QSystemTrayIcon, QMainWindow
 
-from StaticFunctions import get_real_path
+from StaticFunctions import get_real_path, resource_path
 from utils.FightInformationUpdate import FightInformationUpdate
 from utils.Judge import Judge
-from utils.UI_Update import UI_Update
+from utils.UI_Update import UI_Update, create_rounded_pixmap
 from utils.core.Bus import Bus
 from utils.core.FightInformation import FightInformation
 from utils.core.KM_Monitor import KM_Monitor
@@ -248,7 +248,7 @@ class 根窗口(QMainWindow):
         self.monitor = KM_Monitor(self.bus)
         self.monitor.start()
         self.fight_info = FightInformation()
-        self.screen = Screen(self.bus)
+        self.screen = Screen(self.bus,self.fight_info)
         self.screen.screen_interval = self.fight_info.get_config("默认截图间隔")
         self.screen.find_windows = self.fight_info.get_config("查找窗口")
         self.screen.resolution = [1600, 900]
@@ -287,6 +287,20 @@ class 根窗口(QMainWindow):
         self.左侧初始位置 = self.自定义设置["倒计时左初始位置"]  # 左侧初始位置
         self.右侧初始位置 = self.自定义设置["倒计时右初始位置"]  # 右侧初始位置
         self.标签大小 = self.自定义设置["倒计时标签大小"]  # 标签大小
+
+        # 添加两个图片显示控件用来放秘卷显示
+        image_size = 50  # 图片控件的大小
+        center_x = self.width() // 2
+        top_y = 70  # 图片控件的顶部位置
+
+        # 左侧图片控件
+        self.ref_map["1P秘卷"] = QLabel(self)
+        self.ref_map["1P秘卷"].setGeometry(center_x - image_size - 40, top_y, image_size, image_size)
+        # 左侧图片控件
+        self.ref_map["2P秘卷"] = QLabel(self)
+        self.ref_map["2P秘卷"].setGeometry(center_x + 40, top_y, image_size, image_size)
+        self.ref_map.get("1P秘卷").hide()
+        self.ref_map.get("2P秘卷").hide()
 
         # 添加常驻标签
         self.创建常驻标签()

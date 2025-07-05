@@ -25,7 +25,7 @@ class UI_Update(QObject):
         self.bus = bus  # 添加总线引用
         self.ref_map = ref_map
         self.last_update_time = time.perf_counter()
-        self.unknown_secret_scroll = create_rounded_pixmap(QPixmap(resource_path("src/img/Fight/Status/未知密卷.png")), 60)
+        self.unknown_secret_scroll = create_rounded_pixmap(QPixmap(resource_path("src/img/Fight/Status/未知密卷.png")), 50)
         self.max_ougi_1p = 4
         self.max_ougi_2p = 4
         # 订阅事件
@@ -52,6 +52,8 @@ class UI_Update(QObject):
             dic = data.get("fight_info", {})
             self.max_ougi_1p = dic.get('1P奥义点上限')
             self.max_ougi_2p = dic.get('2P奥义点上限')
+            self.ref_map.get("常驻标签左").show()
+            self.ref_map.get("常驻标签右").show()
             # 更新奥义点显示
             左右标签更新(self.ref_map["常驻标签左"], self._ougi_str(1, dic.get("1P奥义点")))
             左右标签更新(self.ref_map["常驻标签右"], self._ougi_str(2, dic.get("2P奥义点")))
@@ -60,23 +62,18 @@ class UI_Update(QObject):
             dic = data.get('secret_scrolls')
             self.update_circular_image("1P秘卷", dic[0])
             self.update_circular_image("2P秘卷", dic[1])
+            self.ref_map.get("1P秘卷").show()
+            self.ref_map.get("2P秘卷").show()
 
         if update_type == "UI_CLEAR":
-            # 重置替身
-            self.ref_map.get("1P替身时间").setText(f"1P : 0.00")
-            self.ref_map.get("1P替身时间").setStyleSheet(stand_in_time_style + f"color: black;")
-            self.ref_map.get("2P替身时间").setText(f"2P : 0.00")
-            self.ref_map.get("2P替身时间").setStyleSheet(stand_in_time_style + f"color: black;")
-            self.ref_map.get("用户自定义倒计时").setText(f"0.00")
-            self.ref_map.get("用户自定义倒计时").setStyleSheet(stand_in_time_style + f"color: black;")
             # 重置忍者信息
             常驻标签透明效果 = QGraphicsOpacityEffect()
-            常驻标签透明效果.setOpacity(1)
-            self.ref_map.get("常驻标签左").setGraphicsEffect(常驻标签透明效果)
-            self.ref_map.get("常驻标签右").setGraphicsEffect(常驻标签透明效果)
+            常驻标签透明效果.setOpacity(0)
+            self.ref_map.get("常驻标签左").hide()
+            self.ref_map.get("常驻标签右").hide()
             # 重置秘卷信息
-            self.ref_map.get("1P秘卷").setPixmap(self.unknown_secret_scroll)
-            self.ref_map.get("2P秘卷").setPixmap(self.unknown_secret_scroll)
+            self.ref_map.get("1P秘卷").hide()
+            self.ref_map.get("2P秘卷").hide()
 
     def _ougi_str(self, player, num):
         color_dic = {
@@ -116,7 +113,7 @@ class UI_Update(QObject):
                 width,
                 height,
                 bytes_per_line,
-                QImage.Format_BGR888  # 指定格式为 BGR
+                QImage.Format.Format_BGR888  # 指定格式为 BGR
             )
             pixmap = QPixmap.fromImage(q_image)
 

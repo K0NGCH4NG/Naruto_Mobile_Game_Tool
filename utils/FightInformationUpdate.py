@@ -22,7 +22,7 @@ FIGHT_STOP = "FIGHT_STOP"
 
 class FightInformationUpdate:
 
-    def __init__(self, bus: Bus,fight_over_signal):
+    def __init__(self, bus: Bus, fight_over_signal):
         self.logger = logging.getLogger(self.__class__.__name__)
         self.bus = bus  # 添加总线引用
         self.matcher = ImageMatch.from_cache(resource_path("src/model/IM.pkl"))
@@ -33,7 +33,7 @@ class FightInformationUpdate:
                            self.handle_check_identification_points)
         self.bus.subscribe(FIGHT_STOP, self.handle_fight_stop)
         self.executor = concurrent.futures.ThreadPoolExecutor(max_workers=4)
-        self.fight_over_signal=fight_over_signal
+        self.fight_over_signal = fight_over_signal
 
         # 定义模板
         # roi格式均为： (x1,x2,y1,y2)
@@ -102,11 +102,11 @@ class FightInformationUpdate:
             if self.last_vs_time and self.vs_type and time.perf_counter(
             ) - self.last_vs_time > 0.06:
                 imgs = self.extract_secret_scroll(self.screen)
-                # if imgs is not None:
-                #     self.bus.publish(UI_UPDATE, {
-                #         'type': 'SECRET_SCROLL',
-                #         'secret_scrolls': imgs
-                #     })
+                if imgs is not None:
+                    self.bus.publish(UI_UPDATE, {
+                        'type': 'SECRET_SCROLL',
+                        'secret_scrolls': imgs
+                    })
                 self.last_vs_time = None
                 self.vs_type = None
 
@@ -160,6 +160,10 @@ class FightInformationUpdate:
             if result[0] == 1:
                 # 检测到了胜者标志，这一对局结束，重置各个战斗信息
                 self.handle_fight_stop({})
+                self.bus.publish(UI_UPDATE,
+                                 {
+                                     'type': "UI_CLEAR"
+                                 })
                 self.bus.publish(FIGHT_INFORMATION_UPDATE_DONE)
                 return
         if self.fight_status_code == 2 and (self.bool_recognize_ninja_1p == 1 and self.bool_recognize_ninja_2p == 1):
@@ -362,7 +366,7 @@ class FightInformationUpdate:
                                 self.bool_recognize_ninja_2p = 1
                                 self.ninja_name_2p = result.get(
                                     'best_match', '非特殊')
-                            if result.get('best_match','非特殊') in ["千手柱间[秽土转生]", "千手柱间[木叶创立]"]:
+                            if result.get('best_match', '非特殊') in ["千手柱间[秽土转生]", "千手柱间[木叶创立]"]:
                                 if i == 0:
                                     self.max_ougi_1p = 6
                                 else:
@@ -446,4 +450,3 @@ class FightInformationUpdate:
         self.max_ougi_2p = 4
         self.bus.publish(FIGHT_OVER)
         self.fight_over_signal.emit({})
-

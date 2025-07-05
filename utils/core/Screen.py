@@ -11,6 +11,7 @@ import numpy as np
 import win32gui
 from PyQt6.QtCore import pyqtSlot, QThread, pyqtSignal, QWaitCondition, QMutex
 
+from utils.core.FightInformation import FightInformation
 from utils.core.Bus import Bus
 
 # 在顶部添加事件常量定义
@@ -27,7 +28,6 @@ except Exception as e:
         ctypes.windll.shcore.SetProcessDpiAwareness(1)  # 1 表示 SYSTEM_DPI_AWARE
     except:
         ctypes.windll.user32.SetProcessDPIAware()  # 兼容旧系统
-
 
 class TimerThread(QThread):
     """被动触发的定时器线程，用于延时后发送信号"""
@@ -83,14 +83,14 @@ class TimerThread(QThread):
         self.mutex.unlock()
         self.wait()
 
-
 class Screen:
-    def __init__(self, bus: Bus ):
+    def __init__(self, bus: Bus, fight_info: FightInformation):
         self.timer_thread = TimerThread()
         self.timer_thread.timeout.connect(self.publish_screen_done)
         self.timer_thread.start()  # 启动线程，线程会进入等待状态
         self.logger = logging.getLogger(self.__class__.__name__)
         self.bus = bus  # 添加总线引用
+        self.fight_info = fight_info
         # self.executor = concurrent.futures.ThreadPoolExecutor(max_workers=1)
         self.camera = dxcam.create(device_idx=0, output_color="BGR")  # returns a DXCamera instance on primary monitor
         # self.camera.start(target_fps=60, video_mode=False)  # Optional argument to capture a region
@@ -106,7 +106,7 @@ class Screen:
         self.resolution = None
         self.last_find_window_rect = time.perf_counter()
         self.window_rect = None
-        self.screen_interval = 0.05
+        self.screen_interval = 50
         self.logger.debug(f"初始化完成...")
 
     def handle_fight_info_update(self, data: Dict):
@@ -123,7 +123,7 @@ class Screen:
         try:
             if self.hwnd == 0:
                 for window_class in self.find_windows:
-                    self.hwnd = win32gui.FindWindow(window_class,None)
+                    self.hwnd = win32gui.FindWindow(window_class, None)
                     if self.hwnd == 0:
                         continue
                     else:
@@ -131,8 +131,8 @@ class Screen:
             if self.hwnd == 0:
                 self.logger.debug("hwnd=0，窗口未找到")
                 self.bool_window_error = True
-                print("不存在符合要求的模拟器窗口，请打开模拟器",end="\r")
-                print(" "*100,end="\r")
+                print("不存在符合要求的模拟器窗口，请打开模拟器", end="\r")
+                print(" " * 100, end="\r")
                 # self.bus.publish(UI_UPDATE, {
                 #     'type': "WINDOW",
                 #     'text': "窗口：未找到",
@@ -144,14 +144,14 @@ class Screen:
             try:
                 if self.window_rect is None or (time.perf_counter() - self.last_find_window_rect) > 1:
                     self.window_rect = self.get_accurate_window_rect(self.hwnd)
-
+                    self.fight_info.set_config("窗口Rect", self.window_rect)
                     self.logger.debug(f"窗口Rect：{self.window_rect},窗口大小：{self.window_rect[2] - self.window_rect[0]}x{self.window_rect[3] - self.window_rect[1]},分辨率：{self.resolution}")
                     self.last_find_window_rect = time.perf_counter()
                 left, top, right, bottom = self.window_rect
                 if (right - left) != self.resolution[0]:
                     # self.logger.debug(f"窗口宽度：{(right - left)}（预期：{self.resolution[0]}）")
                     self.bool_window_error = True
-                    print(f"游戏窗口现在宽度：{(right - left)},预期：{self.resolution[0]}",end="\r")
+                    print(f"游戏窗口现在宽度：{(right - left)},预期：{self.resolution[0]}", end="\r")
                     # self.bus.publish(UI_UPDATE, {
                     #     'type': "WINDOW",
                     #     'text': f"窗口宽度：{(right - left)}（预期：{self.resolution[0]}）",
@@ -165,7 +165,7 @@ class Screen:
                 # self.logger.debug(f"[截图耗时] {(time.perf_counter() - start) * 1000:.1f}ms")
                 if self.bool_window_error:
                     self.bool_window_error = False
-                    print(" "*100,end="\r")
+                    print(" " * 100, end="\r")
                     # self.bus.publish(UI_UPDATE, {
                     #     'type': "WINDOW",
                     #     'text': f"当前分辨率：{self.resolution[0]}x{self.resolution[1]}",
@@ -177,7 +177,6 @@ class Screen:
                 # cv2.imshow("DXCAM", self.screen)
                 # cv2.waitKey(0)
                 # cv2.destroyAllWindows()
-
 
                 # self.logger.info(f"[{datetime.now().strftime('%Y-%m-%d %H:%M:%S.%f')[:23]}] 截图结束")
 
@@ -240,8 +239,6 @@ class Screen:
             pt_bottom[0],
             pt_bottom[1],
         )
-
-
 
 def extract_diamond_region(image):
     """

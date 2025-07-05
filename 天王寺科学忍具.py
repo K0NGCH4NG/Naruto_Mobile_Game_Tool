@@ -28,7 +28,7 @@ from utils.core.Screen import Screen
 FIGHT_INFORMATION_UPDATE_DONE = "FIGHT_INFORMATION_UPDATE_DONE"
 COUNTDOWN_EVENT = "COUNTDOWN_EVENT"
 FIGHT_OVER = "FIGHT_OVER"
-FIGHT_STOP="FIGHT_STOP"
+FIGHT_STOP = "FIGHT_STOP"
 os.environ["QT_LOGGING_RULES"] = "qt.qpa.window.warning=false"
 print("本软件版本为V4.8.0")
 
@@ -454,7 +454,6 @@ class 根窗口(QMainWindow):
                     Qt.TransformationMode.SmoothTransformation)
                 self.范围显示标签.setPixmap(范围显示修改图片)
 
-
                 # ============= 新增分辨率设置区域 =============
 
                 resolution_index_dic = self.generate_resolution_index_dic()
@@ -521,6 +520,7 @@ class 根窗口(QMainWindow):
             resolution_index_dic[resolution_str] = index
             index += 1
         return resolution_index_dic
+
     def on_resolution_changed(self, resolution):
         if resolution in self.resolutions:
             # 根据选择的分辨率更新识别区域范围
@@ -544,6 +544,7 @@ class 根窗口(QMainWindow):
                 self.bus.publish(FIGHT_INFORMATION_UPDATE_DONE)
         else:
             self.logger.error(f"未找到分辨率 {resolution} 的配置信息")
+
     def _on_screenshot_interval_changed(self, text):
         """处理截图间隔改变事件"""
         try:
@@ -564,6 +565,7 @@ class 根窗口(QMainWindow):
             # 输入非数字字符时的处理
             self.截图间隔输入框.setText("50")  # 恢复默认值
             self.logger.debug(f"输入的间隔无效，截图间隔已恢复为50毫秒")
+
     def 添加倒计时标签(self, 方位, trigger_time=None, duration=0):
         try:
             # 根据方位选择对应的倒计时列表和初始位置
@@ -596,6 +598,7 @@ class 根窗口(QMainWindow):
 
         print("莫以为光,就会被黑暗吞噬!")
         sys.exit(233)
+
     def 教程界面(self):
         self.教程窗口 = QWidget()
         self.教程窗口.setWindowTitle("教程窗口")
@@ -649,6 +652,7 @@ class 根窗口(QMainWindow):
 
         except Exception as e:
             self.logger.error(f"召出：{e}")
+
     def 快速创建文本标签(self, 文本内容, 字体大小=12):
         """快速创建富文本标签的简化版本"""
         标签 = QLabel(文本内容)
@@ -815,32 +819,39 @@ class 根窗口(QMainWindow):
 
     def TuPianXianShi(self, 图片路径):
         if hasattr(self, '图片窗口') and self.图片窗口 is not None:
-            if self.图片窗口.isVisible():
-                self.图片窗口.hide()
-            else:
-                self.图片窗口.show()
-        else:
-            self.图片窗口 = QWidget()
-            self.图片窗口.setWindowTitle("图片显示")
-            self.图片窗口.setWindowFlags(Qt.WindowType.FramelessWindowHint
-                                         | Qt.WindowType.WindowStaysOnTopHint
-                                         | Qt.WindowType.Tool
-                                         | Qt.WindowType.WindowTransparentForInput)
-            self.图片窗口.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents)
-            self.图片窗口.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
-            self.图片窗口.setAttribute(Qt.WidgetAttribute.WA_NoSystemBackground)
-            self.图片窗口.setStyleSheet("background:transparent;")
-            屏幕 = QApplication.primaryScreen().size()
-            self.图片窗口.setGeometry(0, 0, 屏幕.width(), 屏幕.height())
-            self.图片标签 = QLabel(self.图片窗口)
-            self.图片标签.setGeometry(0, 0, 屏幕.width(), 屏幕.height())
-            self.图片标签.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents)
-            图片 = QPixmap(图片路径)
-            self.图片标签.setPixmap(
-                图片.scaled(屏幕.width(), 屏幕.height(),
-                            Qt.AspectRatioMode.KeepAspectRatio))
-            self.图片标签.setAlignment(Qt.AlignmentFlag.AlignCenter)
-            self.图片窗口.show()
+            self.图片窗口.close()  # 关闭现有窗口
+
+        # 创建无边框、置顶、透明背景的窗口
+        self.图片窗口 = QWidget()
+        self.图片窗口.setWindowFlags(
+            Qt.WindowType.FramelessWindowHint |
+            Qt.WindowType.WindowStaysOnTopHint |
+            Qt.WindowType.Tool
+        )
+        self.图片窗口.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
+        self.图片窗口.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents)  # 忽略鼠标事件
+
+        # 设置窗口位置和大小
+        left, top, right, bottom = self.fight_info.get_config("窗口Rect")
+        resolution = self.fight_info.get_config("默认分辨率").split("x")
+
+        width = int(resolution[0])
+        height = int(resolution[1])
+
+        self.图片窗口.setGeometry(left, top, width, height)
+
+        # 创建图片标签
+        self.图片标签 = QLabel(self.图片窗口)
+        self.图片标签.setGeometry(0, 0, width, height)  # 标签填充整个窗口
+        self.图片标签.setAlignment(Qt.AlignmentFlag.AlignCenter)
+
+        # 加载并设置图片（保持原始尺寸）
+        图片 = QPixmap(图片路径)
+        # self.图片标签.setPixmap(图片)
+        self.图片标签.setPixmap(图片.scaled(width, height, Qt.AspectRatioMode.KeepAspectRatio))
+
+        # 显示窗口
+        self.图片窗口.show()
 
     def DianXueKaiGuan(self):
         try:

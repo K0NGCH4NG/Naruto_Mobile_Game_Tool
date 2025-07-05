@@ -110,14 +110,6 @@ def _load():
 
 _load()
 
-def 召出内容(文件夹路径):
-    try:
-        os.startfile(文件夹路径)
-
-    except Exception as e:
-        print(f"复制失败：{e}")
-        return False
-
 def 显示通知(标题, 信息, 图标路径):
     # 创建一个应用程序对象
     应用程序 = QApplication(sys.argv)
@@ -642,7 +634,7 @@ class 根窗口(QMainWindow):
         self.按钮1.setStyleSheet(
             "font-family: 黑体; font-size: 40px; color: #A10000; border: 2px solid #A10000;"
         )
-        self.按钮1.clicked.connect(lambda: 召出内容(get_real_path("")))
+        self.按钮1.clicked.connect(lambda: self.召出内容(get_real_path("")))
         告诫之文本 = 言语
         self.标签5 = QLabel(告诫之文本, self.教程窗口)
         self.标签5.setGeometry(800, 0, 800, 1080)
@@ -651,6 +643,12 @@ class 根窗口(QMainWindow):
             "font-family: 黑体; font-size: 20px; color: #EDEDED;")
         self.教程窗口.show()
 
+    def 召出内容(self, 文件夹路径):
+        try:
+            os.startfile(文件夹路径)
+
+        except Exception as e:
+            self.logger.error(f"召出：{e}")
     def 快速创建文本标签(self, 文本内容, 字体大小=12):
         """快速创建富文本标签的简化版本"""
         标签 = QLabel(文本内容)

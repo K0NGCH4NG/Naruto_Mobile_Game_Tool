@@ -20,6 +20,8 @@ class FightInformation:
             "模拟左侧替身按键": {'lock': threading.Lock(), 'data': 'z'},
             "模拟右侧替身按键": {'lock': threading.Lock(), 'data': 'c'},
             "清空倒计时按键": {'lock': threading.Lock(), 'data': 'v'},
+            "展示当前识别点位": {'lock': threading.Lock(), 'data': 'b'},
+
             "窗口Rect": {'lock': threading.Lock(), 'data': None},
 
             "默认分辨率": {'lock': threading.Lock(), 'data': "1600x900"},

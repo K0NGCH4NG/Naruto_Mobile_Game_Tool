@@ -8,19 +8,22 @@ from utils.core.Bus import Bus
 from utils.core.FightInformation import FightInformation
 
 COUNTDOWN_EVENT = "COUNTDOWN_EVENT"
+CHECK_IDENTIFICATION_POINTS = "CHECK_IDENTIFICATION_POINTS"
 
 class KM_Monitor:
-    def __init__(self, bus: Bus, fight_info: FightInformation,key_press_signal):
+    def __init__(self, bus: Bus, fight_info: FightInformation, key_press_signal):
         self.logger = logging.getLogger(self.__class__.__name__)
         self.bus = bus
         self.fight_info = fight_info
-        self.key_press_signal=key_press_signal
+        self.key_press_signal = key_press_signal
         self._active = False
         self.listen_keys = [
             self.fight_info.get_config("关闭程序按键"),
             self.fight_info.get_config("模拟左侧替身按键"),
             self.fight_info.get_config("模拟右侧替身按键"),
             self.fight_info.get_config("清空倒计时按键"),
+            self.fight_info.get_config("展示当前识别点位"),
+
         ]
         # 状态跟踪
         self.active_keys = set()  # 当前按下的按键集合
@@ -88,13 +91,16 @@ class KM_Monitor:
     def _trigger_keyboard(self, key, trigger_time):
         """触发键盘事件"""
         # self.logger.info(f"键盘按下: {key}")
-        self.key_press_signal.emit(
-            {
-                "key": key,
-                "trigger_time": trigger_time,
-                'duration': 14.85,
-            }
-        )
+        if key == self.fight_info.get_config("展示当前识别点位"):
+            self.bus.publish(CHECK_IDENTIFICATION_POINTS)
+        else:
+            self.key_press_signal.emit(
+                {
+                    "key": key,
+                    "trigger_time": trigger_time,
+                    'duration': 14.85,
+                }
+            )
         # self.bus.publish(COUNTDOWN_EVENT, {
         #     'type': 'USER',
         #     'target': '用户自定义倒计时',

@@ -16,6 +16,7 @@ from utils.core.FightInformation import FightInformation
 UI_UPDATE = "UI_UPDATE"
 FIGHT_OVER = "FIGHT_OVER"
 
+
 class UI_Update(QObject):
     update_signal = pyqtSignal(dict)
 
@@ -122,12 +123,14 @@ class UI_Update(QObject):
             # 设置图片到 QLabel
             label.setPixmap(circular_pixmap)
 
+
 def 左右标签更新(对应标签, 文本背景色文本色):
     新文本 = 文本背景色文本色[0]
     背景色 = 文本背景色文本色[1]
     文本色 = 文本背景色文本色[2]
     对应标签.setText(新文本)
     对应标签.setStyleSheet(f"background-color: {背景色};color: {文本色}")
+
 
 def create_rounded_pixmap(pixmap: QPixmap, radius: int) -> QPixmap:
     """在Qt6中创建带圆角的QPixmap"""

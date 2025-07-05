@@ -12,8 +12,8 @@ from typing import Dict
 import cv2
 import mouse
 from PyQt6.QtCore import Qt, QSize, QTimer, pyqtSignal
-from PyQt6.QtGui import QPixmap, QMovie, QColor, QFont, QPalette, QIcon
-from PyQt6.QtWidgets import QApplication, QWidget, QVBoxLayout, QPushButton, QLabel, QGraphicsOpacityEffect, QSystemTrayIcon, QMainWindow, QComboBox
+from PyQt6.QtGui import QPixmap, QMovie, QColor, QFont, QPalette, QIcon, QIntValidator
+from PyQt6.QtWidgets import QApplication, QWidget, QVBoxLayout, QPushButton, QLabel, QGraphicsOpacityEffect, QSystemTrayIcon, QMainWindow, QComboBox, QLineEdit
 
 from StaticFunctions import get_real_path, resource_path
 from utils.FightInformationUpdate import FightInformationUpdate
@@ -494,8 +494,27 @@ class 根窗口(QMainWindow):
                 self.screen.resolution = (self.resolutions[init_resolution]["width"], self.resolutions[init_resolution]["height"])
                 self.fight_info_update.fight_status_templates = self.resolutions[init_resolution]["fight_status_templates"]
                 self.fight_info_update.preprocess_templates()
-                self.fight_info_update.roi_dic = self.resolutions[init_resolution]["roi_dic"]
+                self.fight_info_update.roi_dic = self.resolutions[init_resolution]["roi_dic"][self.fight_info.get_config("默认模式")]
                 self.分辨率下拉框.currentTextChanged.connect(self.on_resolution_changed)
+
+                # ============= 新增截图间隔设置区域 =============
+                # 截图间隔标签
+                self.截图间隔标签 = QLabel("截图间隔", self.设置界面)
+                self.截图间隔标签.setGeometry(*self.自定义设置["截图间隔标签几何"])
+                self.截图间隔标签.setStyleSheet(
+                    f"background-color: #FFFFFF;color: #000000;font-size: 16px;border: {self.自定义设置['设置窗口边缘像素']} solid #008080;"
+                )
+
+                # 截图间隔输入框
+                self.截图间隔输入框 = QLineEdit(self.设置界面)
+                self.截图间隔输入框.setGeometry(*self.自定义设置["截图间隔输入框几何"])
+                self.截图间隔输入框.setStyleSheet(
+                    f"background-color: #FFFFFF;color: #000000;font-size: {self.自定义设置['设置窗口字体大小']};"
+                )
+                self.截图间隔输入框.setValidator(QIntValidator(1, 1000))  # 限制为1-1000的整数
+                self.截图间隔输入框.setText(f"{self.fight_info.get_config("默认截图间隔")}")  # 设置默认值
+                self.截图间隔输入框.setToolTip("截图操作之间的间隔时间，单位为毫秒")
+                self.截图间隔输入框.textChanged.connect(self._on_screenshot_interval_changed)
 
         except Exception as e:
             self.logger.error(f"{e}")
@@ -520,7 +539,7 @@ class 根窗口(QMainWindow):
             self.screen.resolution = (self.resolutions[resolution]["width"], self.resolutions[resolution]["height"])
             self.fight_info_update.fight_status_templates = self.resolutions[resolution]["fight_status_templates"]
             self.fight_info_update.preprocess_templates()
-            self.fight_info_update.roi_dic = self.resolutions[resolution]["roi_dic"]
+            self.fight_info_update.roi_dic = self.resolutions[resolution]["roi_dic"][self.fight_info.get_config("默认模式")]
             if not self.screen.running:
                 self.bus.publish(FIGHT_STOP)
                 # 启动系统
@@ -528,6 +547,26 @@ class 根窗口(QMainWindow):
                 self.bus.publish(FIGHT_INFORMATION_UPDATE_DONE)
         else:
             self.logger.error(f"未找到分辨率 {resolution} 的配置信息")
+    def _on_screenshot_interval_changed(self, text):
+        """处理截图间隔改变事件"""
+        try:
+            # 特殊处理空字符串，视为0
+            if text.strip() == "":
+                interval = 0
+            else:
+                interval = int(text)
+
+            # 确保间隔在有效范围内（0-1000）
+            interval = max(0, min(1000, interval))
+
+            self.fight_info.set_config("默认截图间隔", interval)
+            self.screen.screen_interval = interval
+            self.logger.debug(f"截图间隔已更新为 {interval} 毫秒")
+
+        except ValueError:
+            # 输入非数字字符时的处理
+            self.截图间隔输入框.setText("50")  # 恢复默认值
+            self.logger.debug(f"输入的间隔无效，截图间隔已恢复为50毫秒")
     def 添加倒计时标签(self, 方位, trigger_time=None, duration=0):
         try:
             # 根据方位选择对应的倒计时列表和初始位置
@@ -547,12 +586,19 @@ class 根窗口(QMainWindow):
         except Exception as e:
             self.logger.error(f"设置倒计时出错：{e}")
 
-    @staticmethod
-    def 终章():
-        应用.quit()
+    def 终章(self):
+        try:
+            # 释放资源的代码，例如停止线程
+            if hasattr(self, 'monitor'):
+                self.monitor.stop()
+            # 确保 QApplication 能够正常退出
+            if hasattr(应用, 'quit'):
+                应用.quit()
+        except Exception as e:
+            print(f"退出程序时发生异常: {e}")
+
         print("莫以为光,就会被黑暗吞噬!")
         sys.exit(233)
-
     def 教程界面(self):
         self.教程窗口 = QWidget()
         self.教程窗口.setWindowTitle("教程窗口")

@@ -5,16 +5,23 @@ from threading import Thread, Lock
 from pynput import keyboard
 
 from utils.core.Bus import Bus
+from utils.core.FightInformation import FightInformation
 
 COUNTDOWN_EVENT = "COUNTDOWN_EVENT"
 
-
 class KM_Monitor:
-    def __init__(self, bus: Bus):
+    def __init__(self, bus: Bus, fight_info: FightInformation,key_press_signal):
         self.logger = logging.getLogger(self.__class__.__name__)
         self.bus = bus
+        self.fight_info = fight_info
+        self.key_press_signal=key_press_signal
         self._active = False
-        self.listen_keys = [";"]
+        self.listen_keys = [
+            self.fight_info.get_config("关闭程序按键"),
+            self.fight_info.get_config("模拟左侧替身按键"),
+            self.fight_info.get_config("模拟右侧替身按键"),
+            self.fight_info.get_config("清空倒计时按键"),
+        ]
         # 状态跟踪
         self.active_keys = set()  # 当前按下的按键集合
         self.active_buttons = set()  # 当前按下的鼠标按钮集合
@@ -66,7 +73,6 @@ class KM_Monitor:
                 self.active_keys.add(key_str)
                 self._trigger_keyboard(key_str, trigger_time)
 
-
     def _on_key_release(self, key):
         """键盘按键释放回调"""
         try:
@@ -82,13 +88,20 @@ class KM_Monitor:
     def _trigger_keyboard(self, key, trigger_time):
         """触发键盘事件"""
         # self.logger.info(f"键盘按下: {key}")
-        self.bus.publish(COUNTDOWN_EVENT, {
-            'type': 'USER',
-            'target': '用户自定义倒计时',
-            'time': 15.00,
-            'add': 0.4416,
-            'time_perf': trigger_time,
-        })
+        self.key_press_signal.emit(
+            {
+                "key": key,
+                "trigger_time": trigger_time,
+                'duration': 14.85,
+            }
+        )
+        # self.bus.publish(COUNTDOWN_EVENT, {
+        #     'type': 'USER',
+        #     'target': '用户自定义倒计时',
+        #     'time': 15.00,
+        #     'add': 0.4416,
+        #     'time_perf': trigger_time,
+        # })
 
     # def _on_mouse_click(self, x, y, button, pressed):
     #     """鼠标点击回调"""
@@ -117,7 +130,6 @@ class KM_Monitor:
     #         'y': y,
     #         'event': 'click'
     #     })
-
 
 if __name__ == "__main__":
     bus = Bus()

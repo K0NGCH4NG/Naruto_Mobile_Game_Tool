@@ -178,6 +178,8 @@ print("""
 class 根窗口(QMainWindow):
     countdown_signal = pyqtSignal(dict)  # 传递一个字典参数
     fight_over_signal = pyqtSignal(dict)
+    key_press_signal = pyqtSignal(dict)
+
     def __init__(self):
         # 创建UI引用字典
         self.ref_map = {}
@@ -244,11 +246,12 @@ class 根窗口(QMainWindow):
         # 初始化各个组件
         self.countdown_signal.connect(self.handle_count_down)
         self.fight_over_signal.connect(self.handle_fight_over)
+        self.key_press_signal.connect(self.handle_key_press)
         self.bus = Bus()
-        self.monitor = KM_Monitor(self.bus)
-        self.monitor.start()
         self.fight_info = FightInformation()
-        self.screen = Screen(self.bus,self.fight_info)
+        self.monitor = KM_Monitor(self.bus, self.fight_info,self.key_press_signal)
+        self.monitor.start()
+        self.screen = Screen(self.bus, self.fight_info)
         self.screen.screen_interval = self.fight_info.get_config("默认截图间隔")
         self.screen.find_windows = self.fight_info.get_config("查找窗口")
         self.screen.resolution = [1600, 900]
@@ -269,6 +272,19 @@ class 根窗口(QMainWindow):
 
     def handle_fight_over(self, data: Dict):
         self.清空所有倒计时标签()
+
+    def handle_key_press(self, data: Dict):
+        key = data.get("key")
+        trigger_time = data.get("trigger_time")
+        duration = data.get("duration")
+        if key == self.fight_info.get_config("关闭程序按键"):
+            self.终章()
+        if key == self.fight_info.get_config("模拟左侧替身按键"):
+            self.添加倒计时标签("左侧", trigger_time, duration)
+        if key == self.fight_info.get_config("模拟右侧替身按键"):
+            self.添加倒计时标签("右侧", trigger_time, duration)
+        if key == self.fight_info.get_config("清空倒计时按键"):
+            self.清空所有倒计时标签()
 
     def init_ui(self):
         """创建用户界面"""
@@ -293,10 +309,8 @@ class 根窗口(QMainWindow):
         center_x = self.width() // 2
         top_y = 70  # 图片控件的顶部位置
 
-        # 左侧图片控件
         self.ref_map["1P秘卷"] = QLabel(self)
         self.ref_map["1P秘卷"].setGeometry(center_x - image_size - 40, top_y, image_size, image_size)
-        # 左侧图片控件
         self.ref_map["2P秘卷"] = QLabel(self)
         self.ref_map["2P秘卷"].setGeometry(center_x + 40, top_y, image_size, image_size)
         self.ref_map.get("1P秘卷").hide()
@@ -657,19 +671,6 @@ class 根窗口(QMainWindow):
 
             # 设置背景图片
             self.背景标签.setPixmap(背景图片)
-
-    def AnJianChuLi(self, 按键):
-        if 按键.lower() == self.fight_info.get_config("模拟左侧替身按键"):
-            self.添加倒计时标签(方位="左侧")
-        elif 按键.lower() == self.fight_info.get_config("模拟右侧替身按键"):
-            self.添加倒计时标签(方位="右侧")
-        elif 按键.lower() == self.fight_info.get_config("关闭程序按键"):
-            self.终章()
-        elif 按键.lower() == self.fight_info.get_config("清空倒计时按键"):
-            self.清空所有倒计时标签()
-        else:
-            # print(f"检测按键：{按键}")
-            pass
 
     def YanChiTiaoZheng(self, 延时):
         self.fight_info.set_config("倒计时秒数", round(self.fight_info.get_config("倒计时秒数") + 延时, 1))

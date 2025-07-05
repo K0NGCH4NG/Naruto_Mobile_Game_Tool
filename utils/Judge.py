@@ -22,7 +22,7 @@ class Judge:
         self.logger = logging.getLogger(self.__class__.__name__)
         self.bus = bus
         self.fight_info = fight_info
-        self.judge_times = (0.3, 0.23)  # 第一个是奥义点数量下降的判断时间，第二个是奥义点数量上升的判断时间
+        self.judge_times = (0.16, 0.24)  # 第一个是奥义点数量下降的判断时间，第二个是奥义点数量上升的判断时间
         self.executor = concurrent.futures.ThreadPoolExecutor(max_workers=2)
         self.countdown_signal = countdown_signal
         self.ougi_judge_dic = {

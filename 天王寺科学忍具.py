@@ -465,12 +465,7 @@ class 根窗口(QMainWindow):
 
                 # ============= 新增分辨率设置区域 =============
 
-                resolution_index_dic = {
-                    "2560x1440": 0,
-                    "1920x1080": 1,
-                    "1600x900": 2,
-                    "1280x720": 3
-                }
+                resolution_index_dic = self.generate_resolution_index_dic()
                 # 分辨率标签
                 self.分辨率标签 = QLabel("选择分辨率", self.设置界面)
                 self.分辨率标签.setGeometry(*self.自定义设置["分辨率标签几何"])
@@ -524,6 +519,16 @@ class 根窗口(QMainWindow):
         else:
             self.设置界面.show()  # 如果窗口不可见，则显示
 
+    def generate_resolution_index_dic(self):
+        """根据 self.resolutions.keys() 生成分辨率索引字典"""
+        resolution_index_dic = {}
+        index = 0
+        for resolution in self.resolutions.keys():
+            # 假设 keys 中的分辨率格式为 "宽x高"
+            resolution_str = resolution.replace('*', 'x')  # 如果是用 * 分隔宽高，替换为 x
+            resolution_index_dic[resolution_str] = index
+            index += 1
+        return resolution_index_dic
     def on_resolution_changed(self, resolution):
         if resolution in self.resolutions:
             # 根据选择的分辨率更新识别区域范围

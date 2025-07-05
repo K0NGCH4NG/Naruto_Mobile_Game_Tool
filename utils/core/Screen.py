@@ -143,9 +143,11 @@ class Screen:
 
             try:
                 if self.window_rect is None or (time.perf_counter() - self.last_find_window_rect) > 1:
-                    self.window_rect = self.get_accurate_window_rect(self.hwnd)
-                    self.fight_info.set_config("窗口Rect", self.window_rect)
-                    self.logger.debug(f"窗口Rect：{self.window_rect},窗口大小：{self.window_rect[2] - self.window_rect[0]}x{self.window_rect[3] - self.window_rect[1]},分辨率：{self.resolution}")
+                    window_rect = self.get_accurate_window_rect(self.hwnd)
+                    if self.window_rect != window_rect:
+                        self.window_rect = window_rect
+                        self.fight_info.set_config("窗口Rect", self.window_rect)
+                        self.logger.debug(f"窗口Rect：{self.window_rect},窗口大小：{self.window_rect[2] - self.window_rect[0]}x{self.window_rect[3] - self.window_rect[1]},分辨率：{self.resolution}")
                     self.last_find_window_rect = time.perf_counter()
                 left, top, right, bottom = self.window_rect
                 if (right - left) != self.resolution[0]:

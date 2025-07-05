@@ -13,7 +13,7 @@ import cv2
 import mouse
 from PyQt6.QtCore import Qt, QSize, QTimer, pyqtSignal
 from PyQt6.QtGui import QPixmap, QMovie, QColor, QFont, QPalette, QIcon
-from PyQt6.QtWidgets import QApplication, QWidget, QVBoxLayout, QPushButton, QLabel, QGraphicsOpacityEffect, QSystemTrayIcon, QMainWindow
+from PyQt6.QtWidgets import QApplication, QWidget, QVBoxLayout, QPushButton, QLabel, QGraphicsOpacityEffect, QSystemTrayIcon, QMainWindow, QComboBox
 
 from StaticFunctions import get_real_path, resource_path
 from utils.FightInformationUpdate import FightInformationUpdate
@@ -28,7 +28,7 @@ from utils.core.Screen import Screen
 FIGHT_INFORMATION_UPDATE_DONE = "FIGHT_INFORMATION_UPDATE_DONE"
 COUNTDOWN_EVENT = "COUNTDOWN_EVENT"
 FIGHT_OVER = "FIGHT_OVER"
-
+FIGHT_STOP="FIGHT_STOP"
 os.environ["QT_LOGGING_RULES"] = "qt.qpa.window.warning=false"
 print("本软件版本为V4.8.0")
 
@@ -249,19 +249,18 @@ class 根窗口(QMainWindow):
         self.key_press_signal.connect(self.handle_key_press)
         self.bus = Bus()
         self.fight_info = FightInformation()
-        self.monitor = KM_Monitor(self.bus, self.fight_info,self.key_press_signal)
+        self.monitor = KM_Monitor(self.bus, self.fight_info, self.key_press_signal)
         self.monitor.start()
         self.screen = Screen(self.bus, self.fight_info)
         self.screen.screen_interval = self.fight_info.get_config("默认截图间隔")
         self.screen.find_windows = self.fight_info.get_config("查找窗口")
-        self.screen.resolution = [1600, 900]
+        init_resolution = self.fight_info.get_config("默认分辨率")
+        self.screen.resolution = (self.resolutions[init_resolution]["width"], self.resolutions[init_resolution]["height"])
         self.fight_info_update = FightInformationUpdate(self.bus, self.fight_over_signal)
         self.fight_info_update.fight_status_templates = self.resolutions[self.fight_info.get_config("默认分辨率")]["fight_status_templates"]
         self.fight_info_update.preprocess_templates()
         self.fight_info_update.roi_dic = self.resolutions[self.fight_info.get_config("默认分辨率")]["roi_dic"][self.fight_info.get_config("默认模式")]
         self.judge = Judge(self.bus, self.fight_info, self.countdown_signal)
-
-        # self.count_down = CountDown(self.bus, self.fight_info)
 
     def handle_count_down(self, data: Dict):
         self.logger.debug(f"接收倒计时事件：{data}")
@@ -392,7 +391,8 @@ class 根窗口(QMainWindow):
             if self.设置界面 is None:  # 如果子窗口不存在，则创建
                 self.设置界面 = QWidget()
                 self.设置界面.setWindowTitle("设置界面")
-                self.设置界面.setGeometry(*self.自定义设置["设置界面几何"])  # 子窗口位置和尺寸
+                self.设置界面.setGeometry(*self.自定义设置["设置界面几何"])
+                self.设置界面.setFixedSize(self.自定义设置["设置界面几何"][2], self.自定义设置["设置界面几何"][3])  # 固定为初始大小
                 self.设置窗口图标随机(self.设置界面, get_real_path("files/icon"))
                 self.宁次图片标签 = QLabel(self.设置界面)
                 self.宁次图片标签.setGeometry(*self.自定义设置["宁次标签几何"])
@@ -461,6 +461,42 @@ class 根窗口(QMainWindow):
                     Qt.AspectRatioMode.KeepAspectRatio,
                     Qt.TransformationMode.SmoothTransformation)
                 self.范围显示标签.setPixmap(范围显示修改图片)
+
+
+                # ============= 新增分辨率设置区域 =============
+
+                resolution_index_dic = {
+                    "2560x1440": 0,
+                    "1920x1080": 1,
+                    "1600x900": 2,
+                    "1280x720": 3
+                }
+                # 分辨率标签
+                self.分辨率标签 = QLabel("选择分辨率", self.设置界面)
+                self.分辨率标签.setGeometry(*self.自定义设置["分辨率标签几何"])
+                self.分辨率标签.setStyleSheet(
+                    f"background-color: #FFFFFF;color: #000000;font-size: 16px;border: {self.自定义设置['设置窗口边缘像素']} solid #0000FF;"
+                )
+
+                # 分辨率下拉框
+                self.分辨率下拉框 = QComboBox(self.设置界面)
+                self.分辨率下拉框.setGeometry(*self.自定义设置["分辨率下拉框几何"])
+                self.分辨率下拉框.setStyleSheet(
+                    f"background-color: #FFFFFF;color: #000000;font-size: {self.自定义设置['设置窗口字体大小']};"
+                )
+
+                for resolution in self.resolutions.keys():
+                    self.分辨率下拉框.addItem(resolution)
+
+                init_resolution = self.fight_info.get_config("默认分辨率")
+                self.分辨率下拉框.setCurrentIndex(resolution_index_dic[init_resolution])
+                # 给Screen和FightInformationUpdate里面的识别区域初始化
+                self.screen.resolution = (self.resolutions[init_resolution]["width"], self.resolutions[init_resolution]["height"])
+                self.fight_info_update.fight_status_templates = self.resolutions[init_resolution]["fight_status_templates"]
+                self.fight_info_update.preprocess_templates()
+                self.fight_info_update.roi_dic = self.resolutions[init_resolution]["roi_dic"]
+                self.分辨率下拉框.currentTextChanged.connect(self.on_resolution_changed)
+
         except Exception as e:
             self.logger.error(f"{e}")
         # 切换窗口的显示状态
@@ -469,6 +505,29 @@ class 根窗口(QMainWindow):
         else:
             self.设置界面.show()  # 如果窗口不可见，则显示
 
+    def on_resolution_changed(self, resolution):
+        if resolution in self.resolutions:
+            # 根据选择的分辨率更新识别区域范围
+            self.logger.info(f"切换到分辨率: {resolution}")
+            self.fight_info.set_config("默认分辨率", resolution)
+            # 先暂停整个事件循环
+            if self.screen.running:
+                self.screen.running = False
+                self.bus.publish(FIGHT_STOP)
+                self.screen.bool_window_error = True
+                self.screen.hwnd = 0
+            # 修改Screen和FightInformationUpdate里面的模版
+            self.screen.resolution = (self.resolutions[resolution]["width"], self.resolutions[resolution]["height"])
+            self.fight_info_update.fight_status_templates = self.resolutions[resolution]["fight_status_templates"]
+            self.fight_info_update.preprocess_templates()
+            self.fight_info_update.roi_dic = self.resolutions[resolution]["roi_dic"]
+            if not self.screen.running:
+                self.bus.publish(FIGHT_STOP)
+                # 启动系统
+                self.screen.running = True
+                self.bus.publish(FIGHT_INFORMATION_UPDATE_DONE)
+        else:
+            self.logger.error(f"未找到分辨率 {resolution} 的配置信息")
     def 添加倒计时标签(self, 方位, trigger_time=None, duration=0):
         try:
             # 根据方位选择对应的倒计时列表和初始位置

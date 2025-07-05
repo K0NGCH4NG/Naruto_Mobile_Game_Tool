@@ -110,6 +110,7 @@ class FightInformationUpdate:
                 self.last_vs_time = None
                 self.vs_type = None
 
+
             fight_status_code = self.executor.submit(
                 self.recognize_fight_status, screen_gray, ["Winner"])
             future_dict["对局状态"] = fight_status_code

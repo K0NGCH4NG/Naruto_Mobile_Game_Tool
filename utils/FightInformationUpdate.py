@@ -240,7 +240,7 @@ class FightInformationUpdate:
                 # 按置信度（元组的第二个元素）降序排列
                 valid_results.sort(key=lambda x: x[1], reverse=True)
                 max_result = valid_results[0]  # 取置信度最大的 result
-                # self.logger.debug(f"战斗状态识别结果：[{max_result[0]}] ({max_result[1]:.3f})")
+                self.logger.debug(f"战斗状态识别结果：[{max_result[0]}] ({max_result[1]:.3f})")
             if max_result and max_result[1] > self.fight_status_templates[
                 max_result[0]].get("threshold"):
                 fight_status_code = self.fight_status_templates[
@@ -449,5 +449,8 @@ class FightInformationUpdate:
         self.ninja_name_2p = None
         self.max_ougi_1p = 4
         self.max_ougi_2p = 4
-        self.bus.publish(FIGHT_OVER)
+        self.bus.publish(UI_UPDATE,
+                         {
+                             'type':"UI_CLEAR"
+                         })
         self.fight_over_signal.emit({})

@@ -312,8 +312,8 @@ class 根窗口(QMainWindow):
 
         self.关于按钮 = self.按钮批量创建(self.自定义设置["关于按钮"], lambda: self.关于窗口(get_real_path("files/收款码2.png")))
         self.设置按钮 = self.按钮批量创建(self.自定义设置["设置按钮"], self.SheZhiJieMian)
-        self.左方按钮 = self.按钮批量创建(self.自定义设置["左方按钮"], lambda: self.添加倒计时标签(方位="左侧"))
-        self.右方按钮 = self.按钮批量创建(self.自定义设置["右方按钮"], lambda: self.添加倒计时标签(方位="右侧"))
+        self.左方按钮 = self.按钮批量创建(self.自定义设置["左方按钮"], lambda: self._on_fight_start())
+        self.右方按钮 = self.按钮批量创建(self.自定义设置["右方按钮"], lambda: self._on_fight_stop())
         self.关闭按钮 = self.按钮批量创建(self.自定义设置["关闭按钮"], lambda: self.终章())
         self.教程按钮 = self.按钮批量创建(self.自定义设置["教程按钮"], lambda: self.教程界面())
 
@@ -521,6 +521,18 @@ class 根窗口(QMainWindow):
             index += 1
         return resolution_index_dic
 
+    def _on_fight_stop(self):
+        if self.screen.running:
+            self.screen.running = False
+            self.bus.publish(FIGHT_STOP)
+            self.screen.bool_window_error = True
+            self.screen.hwnd = 0
+    def _on_fight_start(self):
+        if not self.screen.running:
+            self.bus.publish(FIGHT_STOP)
+            # 启动系统
+            self.screen.running = True
+            self.bus.publish(FIGHT_INFORMATION_UPDATE_DONE)
     def on_resolution_changed(self, resolution):
         if resolution in self.resolutions:
             # 根据选择的分辨率更新识别区域范围

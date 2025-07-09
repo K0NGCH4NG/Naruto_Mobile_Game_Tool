@@ -20,6 +20,7 @@ FIGHT_OVER = "FIGHT_OVER"
 CHECK_IDENTIFICATION_POINTS = "CHECK_IDENTIFICATION_POINTS"
 FIGHT_STOP = "FIGHT_STOP"
 
+
 class FightInformationUpdate:
 
     def __init__(self, bus: Bus, fight_over_signal):
@@ -109,7 +110,6 @@ class FightInformationUpdate:
                     })
                 self.last_vs_time = None
                 self.vs_type = None
-
 
             fight_status_code = self.executor.submit(
                 self.recognize_fight_status, screen_gray, ["Winner"])
@@ -451,6 +451,6 @@ class FightInformationUpdate:
         self.max_ougi_2p = 4
         self.bus.publish(UI_UPDATE,
                          {
-                             'type':"UI_CLEAR"
+                             'type': "UI_CLEAR"
                          })
         self.fight_over_signal.emit({})

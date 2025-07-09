@@ -5,7 +5,7 @@ Unicode true
 
 ; HM NIS Edit Wizard helper defines
 !define PRODUCT_NAME "天王寺科学忍具"
-!define PRODUCT_VERSION "5.8.8_x"
+!define PRODUCT_VERSION "5.8.8_1"
 !define PRODUCT_PUBLISHER "凤灯幽夜"
 !define PRODUCT_WEB_SITE "https://github.com/K0NGCH4NG/Naruto_Mobile_Game_Tool/"
 !define PRODUCT_DIR_REGKEY "Software\Microsoft\Windows\CurrentVersion\App Paths\天王寺科学忍具.exe"
@@ -91,7 +91,7 @@ Section "天王寺科学忍具" SEC_MAIN
   CreateDirectory "$INSTDIR\config"  ; 确保 config 目录存在
   SetOutPath "$INSTDIR\config"       ; 切换到 config 子目录
   ; 检查 Custom.json 是否存在，如果存在则不覆盖
-  IfFileExists "$INSTDIR\config\Custom.json" 0 +2
+  IfFileExists "$INSTDIR\config\Custom.json" +2 0
     File "..\config\Custom.json"
 
   ; 其他两个文件始终覆盖

@@ -147,4 +147,4 @@ def main(version):
 if __name__ == "__main__":
     # 设置控制台编码为 UTF-8 (等效于 chcp 65001)
     os.system("chcp 65001 > nul")
-    main("5.8.8_x")
+    main("5.8.8_1")

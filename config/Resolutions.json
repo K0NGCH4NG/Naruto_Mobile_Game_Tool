@@ -1,7 +1,7 @@
 {
     "2560x1440": {
-        "width": 1920,
-        "height": 1080,
+        "width": 2560,
+        "height": 1440,
         "fight_status_templates": {
             "首局VS": {
                 "path": "src\\img\\Fight\\Status\\",
@@ -45,7 +45,7 @@
             "59": {
                 "path": "src\\img\\Fight\\Status\\",
                 "roi": [726, 876, 59, 167],
-                "threshold": 0.85,
+                "threshold": 0.75,
                 "fight_status_code": 2
             },
             "Winner": {
@@ -144,7 +144,7 @@
             "59": {
                 "path": "src\\img\\Fight\\Status\\",
                 "roi": [726, 876, 59, 167],
-                "threshold": 0.85,
+                "threshold": 0.75,
                 "fight_status_code": 2
             },
             "Winner": {
@@ -243,7 +243,7 @@
             "59": {
                 "path": "src\\img\\Fight\\Status\\",
                 "roi": [726, 876, 59, 167],
-                "threshold": 0.85,
+                "threshold": 0.75,
                 "fight_status_code": 2
             },
             "Winner": {
@@ -297,8 +297,8 @@
         }
     },
     "1280x720": {
-        "width": 1600,
-        "height": 900,
+        "width": 1280,
+        "height": 720,
         "fight_status_templates": {
             "首局VS": {
                 "path": "src\\img\\Fight\\Status\\",
@@ -342,7 +342,7 @@
             "59": {
                 "path": "src\\img\\Fight\\Status\\",
                 "roi": [726, 876, 59, 167],
-                "threshold": 0.85,
+                "threshold": 0.75,
                 "fight_status_code": 2
             },
             "Winner": {

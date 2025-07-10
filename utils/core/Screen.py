@@ -29,6 +29,7 @@ except Exception as e:
     except:
         ctypes.windll.user32.SetProcessDPIAware()  # 兼容旧系统
 
+
 class TimerThread(QThread):
     """被动触发的定时器线程，用于延时后发送信号"""
     timeout = pyqtSignal(object)  # 携带数据的超时信号
@@ -83,10 +84,11 @@ class TimerThread(QThread):
         self.mutex.unlock()
         self.wait()
 
+
 class Screen:
     def __init__(self, bus: Bus, fight_info: FightInformation):
         self.timer_thread = TimerThread()
-        self.timer_thread.timeout.connect(self.publish_screen_done)
+        self.timer_thread.timeout.connect(self.timer_publish_screen_done)
         self.timer_thread.start()  # 启动线程，线程会进入等待状态
         self.logger = logging.getLogger(self.__class__.__name__)
         self.bus = bus  # 添加总线引用
@@ -113,13 +115,13 @@ class Screen:
         """事件处理：战斗信息更新完成时触发截图"""
         # 使用线程避免阻塞事件循环
         if self.running:
-            threading.Thread(target=self.get_screen_qt, daemon=True).start()
+            threading.Thread(target=self.get_screen_qt, args=(data,), daemon=True).start()
         else:
             self.bus.publish(FIGHT_STOP)
 
-    def get_screen_qt(self):
+    def get_screen_qt(self, data: Dict):
         """执行截屏操作"""
-        start = time.perf_counter()
+        start = data.get('end_time')
         try:
             if self.hwnd == 0:
                 for window_class in self.find_windows:
@@ -138,7 +140,12 @@ class Screen:
                 #     'text': "窗口：未找到",
                 #     'color': "red"
                 # })
-                self.bus.publish(SCREEN_DONE, {'screen': None})
+                self.publish_screen_done(
+                    start,
+                    {
+                        'screen': None,
+                    }
+                )
                 return
 
             try:
@@ -160,8 +167,12 @@ class Screen:
                     #     'text': f"窗口宽度：{(right - left)}（预期：{self.resolution[0]}）",
                     #     'color': "red"
                     # })
-
-                    self.bus.publish(SCREEN_DONE, {'screen': None})
+                    self.publish_screen_done(
+                        start,
+                        {
+                            'screen': None,
+                        }
+                    )
                     return
                 screen_time = time.perf_counter()
                 self.screen = self.camera.grab(region=(left, bottom - self.resolution[1], left + self.resolution[0], bottom))
@@ -183,30 +194,31 @@ class Screen:
 
                 # self.logger.info(f"[{datetime.now().strftime('%Y-%m-%d %H:%M:%S.%f')[:23]}] 截图结束")
 
-                end = time.perf_counter()
-                elapsed_time = (end - start) * 1000  # 计算截图花费的时间（毫秒）
-                wait_time = self.screen_interval - elapsed_time  # 计算需要等待的时间
-
-                data = {
-                    'screen': self.screen,
-                    'screen_time': screen_time
-                }
-                # self.logger.debug(f"当前截图间隔：{self.screen_interval}ms")
-                try:
-                    if wait_time > 0:
-                        # 触发定时器，线程会在延时后自动发送信号
-                        self.timer_thread.trigger(wait_time, data)
-                    else:
-                        # 如果不需要等待，直接发布事件
-                        self.publish_screen_done(data)
-                except Exception as e:
-                    self.logger.error(f"{e}")
+                self.publish_screen_done(
+                    start,
+                    {
+                        'screen': self.screen,
+                        'screen_time': screen_time
+                    }
+                )
             except Exception as e:
                 self.logger.error(f"截屏过程中发生错误: {e}")
         except Exception as e:
             self.logger.error(f"截屏定位窗口过程中发生错误: {e}")
 
-    def publish_screen_done(self, data):
+    def publish_screen_done(self, start, data):
+        elapsed_time = (time.perf_counter() - start) * 1000  # 计算截图花费的时间（毫秒）
+        wait_time = self.screen_interval - elapsed_time  # 计算需要等待的时间
+        # self.logger.debug(f"当前截图间隔：{self.screen_interval}ms")
+        if wait_time > 0:
+            # 触发定时器，线程会在延时后自动发送信号
+            self.timer_thread.trigger(wait_time, data)
+        else:
+            # 如果不需要等待，直接发布事件
+            self.timer_publish_screen_done(data)
+
+    def timer_publish_screen_done(self, data):
+        data['end_time'] = time.perf_counter()
         self.bus.publish(SCREEN_DONE, data)
 
     @staticmethod
@@ -242,6 +254,7 @@ class Screen:
             pt_bottom[0],
             pt_bottom[1],
         )
+
 
 def extract_diamond_region(image):
     """

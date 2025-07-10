@@ -81,8 +81,13 @@ class FightInformationUpdate:
         """处理截图完成事件"""
         # 并行执行所有识别任务
         screen = data.get('screen', None)
+        end_time=data.get('end_time',time.perf_counter())
         if screen is None or screen.size == 0:
-            self.bus.publish(FIGHT_INFORMATION_UPDATE_DONE)
+            self.bus.publish(
+                FIGHT_INFORMATION_UPDATE_DONE,
+                {
+                    'end_time': end_time
+                })
             return
 
         if screen.shape[:2] != (900, 1600):
@@ -156,7 +161,11 @@ class FightInformationUpdate:
                 self.last_vs_time = time.perf_counter()
                 self.vs_type = result[1]
                 self.match_ninja_time = time.perf_counter()
-                self.bus.publish(FIGHT_INFORMATION_UPDATE_DONE)
+                self.bus.publish(
+                    FIGHT_INFORMATION_UPDATE_DONE,
+                    {
+                        'end_time': end_time
+                    })
                 return
             if result[0] == 1:
                 # 检测到了胜者标志，这一对局结束，重置各个战斗信息
@@ -165,12 +174,16 @@ class FightInformationUpdate:
                                  {
                                      'type': "UI_CLEAR"
                                  })
-                self.bus.publish(FIGHT_INFORMATION_UPDATE_DONE)
+                self.bus.publish(
+                    FIGHT_INFORMATION_UPDATE_DONE,
+                    {
+                        'end_time': end_time
+                    })
                 return
         if self.fight_status_code == 2 and (self.bool_recognize_ninja_1p == 1 and self.bool_recognize_ninja_2p == 1):
             temp_data = {
                 "对局状态": self.fight_status_code,
-                "双方奥义点和时间戳": results.get("双方奥义点和时间戳", None),
+                "双方奥义点和时间戳": results.get("双方奥义点和时间戳", (None, None, end_time)),
                 "1P奥义点": results.get("双方奥义点和时间戳", (None, None))[0],
                 "2P奥义点": results.get("双方奥义点和时间戳", (None, None))[1],
                 "1P奥义点上限": self.max_ougi_1p,
@@ -181,7 +194,11 @@ class FightInformationUpdate:
             # self.logger.debug(temp_data)
             self.bus.publish(JUDGE_START, temp_data)
         else:
-            self.bus.publish(FIGHT_INFORMATION_UPDATE_DONE)
+            self.bus.publish(
+                FIGHT_INFORMATION_UPDATE_DONE,
+                {
+                    'end_time': end_time
+                })
 
     def extract_secret_scroll(self, screen):
         secret_scroll_regions = self.roi_dic["秘卷区域"]
@@ -282,49 +299,11 @@ class FightInformationUpdate:
             else:
                 count2 = self.max_ougi_2p - vectorized_count(
                     self.roi_dic["奥义点2"][:self.max_ougi_2p])
-
-            # for i in range(count1):
-            #     if self.ninja_name_1p in ["宇智波鼬[百战]"]:
-            #         count1 += self.count_ougi(screen, self.roi_dic["百战鼬奥义点1"][i])
-            #
-            #     else:
-            #         count1 += self.count_ougi(screen, self.roi_dic["奥义点1"][i])
-            # for i in range(count2):
-            #     if self.ninja_name_2p in ["宇智波鼬[百战]"]:
-            #         count2 += self.count_ougi(screen, self.roi_dic["百战鼬奥义点2"][i])
-            #     else:
-            #         count2 += self.count_ougi(screen, self.roi_dic["奥义点2"][i])
-
             # print(f"[{datetime.now().strftime('%Y-%m-%d %H:%M:%S.%f')[:23]}] 1P 【{count1}】 ： 2P【{count2}】")
             return count1, count2, screen_time
         except Exception as e:
             self.logger.error(f"识别奥义点时出错：{e}")
             return 2, 2, screen_time
-
-    @staticmethod
-    def count_ougi(screen, region, threshold=180):
-        """
-        region=(x_start,x_end,y_start,y_end)
-        """
-        # 使用 NumPy 的向量化操作
-        cropped_image = screen[region[2]:region[3], region[0]:region[1]]
-
-        # 将图片转换到 HSV 颜色空间
-        hsv_image = cv2.cvtColor(cropped_image, cv2.COLOR_BGR2HSV)
-
-        # 分离 V（亮度）通道
-        v_channel = hsv_image[:, :, 2]
-
-        # 创建掩码来标识亮度低于阈值的像素
-        v_mask = v_channel < threshold
-
-        # 计算符合条件的像素数量和占比
-        count = np.sum(v_mask)
-        total = v_channel.size  # 所有通道的像素数应该相同，任意通道的 size 都可以
-        y = count / total * 100
-
-        # 如果符合条件的像素占比超过 50%，则返回 -1，否则返回 0
-        return -1 if y > 50 else 0
 
     def match_ninja(self, screen, match_list):
         ninja_names = {"1P": "非特殊", "2P": "非特殊"}

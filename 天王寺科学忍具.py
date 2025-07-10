@@ -32,6 +32,7 @@ FIGHT_STOP = "FIGHT_STOP"
 os.environ["QT_LOGGING_RULES"] = "qt.qpa.window.warning=false"
 print("本软件版本为V4.8.0")
 
+
 def 发送打开次数():
     """
     向指定服务器发送 '脚本打开次数+1' 数据，并检测连接状态。
@@ -62,7 +63,9 @@ def 发送打开次数():
         # 关闭客户端socket
         客户端.close()
 
+
 发送打开次数()
+
 
 def 强行设置DPI():
     """最强力的 DPI 设置"""
@@ -90,10 +93,12 @@ def 强行设置DPI():
             except:
                 pass
 
+
 # 在创建 QApplication 之前调用
 强行设置DPI()
 
 言语 = "1"
+
 
 def _load():
     try:
@@ -108,7 +113,9 @@ def _load():
     except:
         pass
 
+
 _load()
+
 
 def 显示通知(标题, 信息, 图标路径):
     # 创建一个应用程序对象
@@ -127,6 +134,7 @@ def 显示通知(标题, 信息, 图标路径):
                          5000)  # 5000毫秒 = 5秒
     # 使用 QTimer 关闭 QApplication 而不启动事件循环
     QTimer.singleShot(1000, 应用程序.quit)  # 1秒后关闭 QApplication
+
 
 # 使用示例
 选项列表 = [
@@ -167,6 +175,7 @@ print("""
 软件作者:凤灯幽夜
 """)
 
+
 class 根窗口(QMainWindow):
     countdown_signal = pyqtSignal(dict)  # 传递一个字典参数
     fight_over_signal = pyqtSignal(dict)
@@ -189,7 +198,11 @@ class 根窗口(QMainWindow):
         # 创建UI
         self.init_ui()
         self.ui_update = UI_Update(self.bus, self.ref_map)
-        self.bus.publish(FIGHT_INFORMATION_UPDATE_DONE)
+        self.bus.publish(
+            FIGHT_INFORMATION_UPDATE_DONE,
+            {
+                'end_time': time.perf_counter()
+            })
         self.logger.info(f"初始化完成...")
 
     def load_resolutions(self):
@@ -530,13 +543,23 @@ class 根窗口(QMainWindow):
         if not self.screen.running:
             # 启动系统
             self.screen.running = True
-            self.bus.publish(FIGHT_INFORMATION_UPDATE_DONE)
+            self.bus.publish(
+                FIGHT_INFORMATION_UPDATE_DONE,
+                {
+                    'end_time': time.perf_counter()
+                })
+
     def _on_fight_start(self):
         if not self.screen.running:
             self.bus.publish(FIGHT_STOP)
             # 启动系统
             self.screen.running = True
-            self.bus.publish(FIGHT_INFORMATION_UPDATE_DONE)
+            self.bus.publish(
+                FIGHT_INFORMATION_UPDATE_DONE,
+                {
+                    'end_time': time.perf_counter()
+                })
+
     def on_resolution_changed(self, resolution):
         if resolution in self.resolutions:
             # 根据选择的分辨率更新识别区域范围
@@ -557,7 +580,11 @@ class 根窗口(QMainWindow):
                 self.bus.publish(FIGHT_STOP)
                 # 启动系统
                 self.screen.running = True
-                self.bus.publish(FIGHT_INFORMATION_UPDATE_DONE)
+                self.bus.publish(
+                    FIGHT_INFORMATION_UPDATE_DONE,
+                    {
+                        'end_time': time.perf_counter()
+                    })
         else:
             self.logger.error(f"未找到分辨率 {resolution} 的配置信息")
 
@@ -1132,6 +1159,7 @@ class 根窗口(QMainWindow):
             self.拖动位置 = None
             事件.accept()
 
+
 def 触发_左键短按(坐标):
     mouse.move(坐标[0], 坐标[1])
     mouse.press(button='left')
@@ -1143,6 +1171,7 @@ def 触发_左键短按(坐标):
 
     # 设置单次触发的定时器，200毫秒后释放鼠标
     QTimer.singleShot(200, 释放鼠标)
+
 
 if __name__ == "__main__":
     应用 = QApplication(sys.argv)

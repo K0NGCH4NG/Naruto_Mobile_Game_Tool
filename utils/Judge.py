@@ -17,6 +17,7 @@ JUDGE_START = "JUDGE_START"
 FIGHT_OVER = "FIGHT_OVER"
 JUDGE_DONE = "JUDGE_DONE"
 
+
 class Judge:
     def __init__(self, bus: Bus, fight_info: FightInformation, countdown_signal=None):
         self.logger = logging.getLogger(self.__class__.__name__)
@@ -76,19 +77,34 @@ class Judge:
     def _judge(self, data):
         try:
             ougis = data.get("双方奥义点和时间戳", None)
-            if ougis is None:
+            if ougis[0] is None:
                 self.logger.debug("双方奥义点和时间戳为空")
-                self.bus.publish(JUDGE_DONE)
+                self.bus.publish(
+                    JUDGE_DONE,
+                    {
+                        'end_time': ougis[2]
+                    }
+                )
                 return
             if not self.ougi_judge_dic[f"1P奥义点"] and not self.ougi_judge_dic[f"2P奥义点"]:
                 self.ougi_judge_dic[f"1P奥义点"] = ougis[0]
                 self.ougi_judge_dic[f"2P奥义点"] = ougis[1]
-                self.bus.publish(JUDGE_DONE)
+                self.bus.publish(
+                    JUDGE_DONE,
+                    {
+                        'end_time': ougis[2]
+                    }
+                )
                 return
             # self.logger.debug(f"[奥义点] [{self.ougi_judge_dic[f"1P奥义点"]}->{ougis[0]}] [{self.ougi_judge_dic[f"2P奥义点"]}->{ougis[1]}]")
             futures = [self.executor.submit(self._judge_single, 1, ougis), self.executor.submit(self._judge_single, 2, ougis)]
             concurrent.futures.wait(futures)
-            self.bus.publish(JUDGE_DONE)
+            self.bus.publish(
+                JUDGE_DONE,
+                {
+                    'end_time': ougis[2]
+                }
+            )
             # self.logger.debug(f"JUDGE成功判断")
             self.bus.publish(UI_UPDATE, {
                 'type': 'JUDGE',

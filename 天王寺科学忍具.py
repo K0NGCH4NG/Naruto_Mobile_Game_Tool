@@ -559,12 +559,10 @@ class 根窗口(QMainWindow):
 
     def _on_auto_record_changed(self):
         if self.fight_info.get_config("回放开关") == 0:
-            self.logger.info("开启")
             self.保存回放按钮.setText("已开启")
             self.fight_info.set_config("回放开关", 1)
         elif self.fight_info.get_config("回放开关") == 1:
             self.保存回放按钮.setText("已关闭")
-            self.logger.info("关闭")
             self.fight_info.set_config("回放开关", 0)
 
     def generate_resolution_index_dic(self):

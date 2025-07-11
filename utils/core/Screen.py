@@ -149,12 +149,16 @@ class Screen:
                 return
 
             try:
-                if self.window_rect is None or (time.perf_counter() - self.last_find_window_rect) > 1:
+                if (self.window_rect is None or
+                        (time.perf_counter() - self.last_find_window_rect) > 0.5):
                     window_rect = self.get_accurate_window_rect(self.hwnd)
                     if self.window_rect != window_rect:
                         self.window_rect = window_rect
                         self.fight_info.set_config("窗口Rect", self.window_rect)
-                        self.logger.debug(f"窗口Rect：{self.window_rect},窗口大小：{self.window_rect[2] - self.window_rect[0]}x{self.window_rect[3] - self.window_rect[1]},分辨率：{self.resolution}")
+                        self.logger.debug(f"窗口Rect：{self.window_rect},窗口大小："
+                                          f"{self.window_rect[2] - self.window_rect[0]}x"
+                                          f"{self.window_rect[3] - self.window_rect[1]},"
+                                          f"分辨率：{self.resolution}")
                     self.last_find_window_rect = time.perf_counter()
                 left, top, right, bottom = self.window_rect
                 if (right - left) != self.resolution[0]:
@@ -175,7 +179,8 @@ class Screen:
                     )
                     return
                 screen_time = time.perf_counter()
-                self.screen = self.camera.grab(region=(left, bottom - self.resolution[1], left + self.resolution[0], bottom))
+                self.screen = self.camera.grab(region=(
+                    left, bottom - self.resolution[1], left + self.resolution[0], bottom))
                 # self.logger.debug(f"[截图耗时] {(time.perf_counter() - start) * 1000:.1f}ms")
                 if self.bool_window_error:
                     self.bool_window_error = False
@@ -203,6 +208,12 @@ class Screen:
                 )
             except Exception as e:
                 self.logger.error(f"截屏过程中发生错误: {e}")
+                self.publish_screen_done(
+                    start,
+                    {
+                        'screen': self.screen,
+                    }
+                )
         except Exception as e:
             self.logger.error(f"截屏定位窗口过程中发生错误: {e}")
 

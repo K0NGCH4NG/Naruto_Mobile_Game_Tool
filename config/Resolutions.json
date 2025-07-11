@@ -251,6 +251,12 @@
                 "roi": [608, 723, 613, 677],
                 "threshold": 0.6,
                 "fight_status_code": 1
+            },
+            "举报反馈": {
+                "path": "src\\img\\Fight\\Status\\",
+                "roi": [956, 1161, 11, 54],
+                "threshold": 0.6,
+                "fight_status_code": 1
             }
         },
         "roi_dic": {

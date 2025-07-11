@@ -19,6 +19,7 @@ JUDGE_START = "JUDGE_START"
 FIGHT_OVER = "FIGHT_OVER"
 CHECK_IDENTIFICATION_POINTS = "CHECK_IDENTIFICATION_POINTS"
 FIGHT_STOP = "FIGHT_STOP"
+MOUSE_CLICK = "MOUSE_CLICK"
 
 
 class FightInformationUpdate:
@@ -81,7 +82,7 @@ class FightInformationUpdate:
         """处理截图完成事件"""
         # 并行执行所有识别任务
         screen = data.get('screen', None)
-        end_time=data.get('end_time',time.perf_counter())
+        end_time = data.get('end_time', time.perf_counter())
         if screen is None or screen.size == 0:
             self.bus.publish(
                 FIGHT_INFORMATION_UPDATE_DONE,
@@ -99,12 +100,14 @@ class FightInformationUpdate:
         future_dict = {}  # 用于存储线程任务和对应的任务名称
         futures = []  # 用于等待的Future列表
         if self.fight_status_code == 1:
+            # 战斗状态码是1说明上局战斗已经结束，需要识别60开始战斗/识别"举报反馈"按钮，进行自动保存回放
             fight_status_code = self.executor.submit(
-                self.recognize_fight_status, screen_gray, ["60"])
+                self.recognize_fight_status, screen_gray, ["60", "举报反馈"])
             future_dict["对局状态"] = fight_status_code
             futures.append(fight_status_code)
 
         if self.fight_status_code == 2:
+            # 战斗码为2说明战斗开始，需要识别胜者标志结束战斗，同时完成包括密卷和忍者识别以及奥义点识别的任务
             if self.last_vs_time and self.vs_type and time.perf_counter(
             ) - self.last_vs_time > 0.06:
                 imgs = self.extract_secret_scroll(self.screen)
@@ -121,7 +124,8 @@ class FightInformationUpdate:
             future_dict["对局状态"] = fight_status_code
             futures.append(fight_status_code)
 
-            if (self.bool_recognize_ninja_1p == 0 or self.bool_recognize_ninja_2p == 0) and time.perf_counter() - self.match_ninja_time > 0.1:
+            if (
+                    self.bool_recognize_ninja_1p == 0 or self.bool_recognize_ninja_2p == 0) and time.perf_counter() - self.match_ninja_time > 0.1:
                 if self.match_ninja_time and time.perf_counter() - self.match_ninja_time < 3:
                     ninja_name = self.executor.submit(
                         self.match_ninja, screen_gray, [
@@ -179,8 +183,16 @@ class FightInformationUpdate:
                     {
                         'end_time': end_time
                     })
+                if result[1] == "举报反馈":
+                    # 在这里补充操纵鼠标点击屏幕回放位置的功能
+                    self.bus.publish(MOUSE_CLICK,
+                                     {
+                                         'type': "RECORD"
+                                     })
+                    pass
                 return
-        if self.fight_status_code == 2 and (self.bool_recognize_ninja_1p == 1 and self.bool_recognize_ninja_2p == 1):
+        if self.fight_status_code == 2 and (
+                self.bool_recognize_ninja_1p == 1 and self.bool_recognize_ninja_2p == 1):
             temp_data = {
                 "对局状态": self.fight_status_code,
                 "双方奥义点和时间戳": results.get("双方奥义点和时间戳", (None, None, end_time)),
@@ -346,7 +358,8 @@ class FightInformationUpdate:
                                 self.bool_recognize_ninja_2p = 1
                                 self.ninja_name_2p = result.get(
                                     'best_match', '非特殊')
-                            if result.get('best_match', '非特殊') in ["千手柱间[秽土转生]", "千手柱间[木叶创立]"]:
+                            if result.get('best_match', '非特殊') in ["千手柱间[秽土转生]",
+                                "千手柱间[木叶创立]"]:
                                 if i == 0:
                                     self.max_ougi_1p = 6
                                 else:

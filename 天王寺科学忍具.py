@@ -13,7 +13,8 @@ import cv2
 import mouse
 from PyQt6.QtCore import Qt, QSize, QTimer, pyqtSignal
 from PyQt6.QtGui import QPixmap, QMovie, QColor, QFont, QPalette, QIcon, QIntValidator
-from PyQt6.QtWidgets import QApplication, QWidget, QVBoxLayout, QPushButton, QLabel, QGraphicsOpacityEffect, QSystemTrayIcon, QMainWindow, QComboBox, QLineEdit
+from PyQt6.QtWidgets import QApplication, QWidget, QVBoxLayout, QPushButton, QLabel, \
+    QGraphicsOpacityEffect, QSystemTrayIcon, QMainWindow, QComboBox, QLineEdit
 
 from StaticFunctions import get_real_path, resource_path
 from utils.FightInformationUpdate import FightInformationUpdate
@@ -139,7 +140,8 @@ def 显示通知(标题, 信息, 图标路径):
 # 使用示例
 选项列表 = [
     ("Doki Pipo☆Emotion", "奇迹般的访问数无限延伸", get_real_path("files/icon/1.ico")),
-    ("Tele-telepathy", "将一个又一个的点联结起来\n连成了线 然后变成了圆", get_real_path("files/icon/6.ico")),
+    ("Tele-telepathy", "将一个又一个的点联结起来\n连成了线 然后变成了圆",
+    get_real_path("files/icon/6.ico")),
     ("Analogue Heart", "连接起来吧 Analogue Heart\n那最重要的 Analogue Heart",
     get_real_path("files/icon/1.ico")),
     (
@@ -203,6 +205,7 @@ class 根窗口(QMainWindow):
             {
                 'end_time': time.perf_counter()
             })
+        self._bool_show_range_window = False
         self.logger.info(f"初始化完成...")
 
     def load_resolutions(self):
@@ -225,8 +228,10 @@ class 根窗口(QMainWindow):
         cv2.ocl.setUseOpenCL(True)
 
         self.setWindowTitle("璃奈板")
-        self.setGeometry(int(self.自定义设置["主窗口位置与大小"][0]), int(self.自定义设置["主窗口位置与大小"][1]),
-                         int(self.自定义设置["主窗口位置与大小"][2]), int(self.自定义设置["主窗口位置与大小"][3]))
+        self.setGeometry(int(self.自定义设置["主窗口位置与大小"][0]), int(
+            self.自定义设置["主窗口位置与大小"][1]),
+                         int(self.自定义设置["主窗口位置与大小"][2]), int(
+                self.自定义设置["主窗口位置与大小"][3]))
         self.setWindowFlags(Qt.WindowType.FramelessWindowHint)
         self.setWindowFlag(Qt.WindowType.WindowStaysOnTopHint)
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
@@ -260,11 +265,17 @@ class 根窗口(QMainWindow):
         self.screen.screen_interval = self.fight_info.get_config("默认截图间隔")
         self.screen.find_windows = self.fight_info.get_config("查找窗口")
         init_resolution = self.fight_info.get_config("默认分辨率")
-        self.screen.resolution = (self.resolutions[init_resolution]["width"], self.resolutions[init_resolution]["height"])
+        resolution_tuple = (
+            self.resolutions[init_resolution]["width"],
+            self.resolutions[init_resolution]["height"])
+        self.screen.resolution = resolution_tuple
         self.fight_info_update = FightInformationUpdate(self.bus, self.fight_over_signal)
-        self.fight_info_update.fight_status_templates = self.resolutions[self.fight_info.get_config("默认分辨率")]["fight_status_templates"]
+        self.fight_info_update.fight_status_templates = \
+            self.resolutions[self.fight_info.get_config("默认分辨率")]["fight_status_templates"]
         self.fight_info_update.preprocess_templates()
-        self.fight_info_update.roi_dic = self.resolutions[self.fight_info.get_config("默认分辨率")]["roi_dic"][self.fight_info.get_config("默认模式")]
+        self.fight_info_update.roi_dic = \
+            self.resolutions[self.fight_info.get_config("默认分辨率")]["roi_dic"][
+                self.fight_info.get_config("默认模式")]
         self.judge = Judge(self.bus, self.fight_info, self.countdown_signal)
 
     def handle_count_down(self, data: Dict):
@@ -314,7 +325,8 @@ class 根窗口(QMainWindow):
         top_y = 70  # 图片控件的顶部位置
 
         self.ref_map["1P秘卷"] = QLabel(self)
-        self.ref_map["1P秘卷"].setGeometry(center_x - image_size - 40, top_y, image_size, image_size)
+        self.ref_map[
+            "1P秘卷"].setGeometry(center_x - image_size - 40, top_y, image_size, image_size)
         self.ref_map["2P秘卷"] = QLabel(self)
         self.ref_map["2P秘卷"].setGeometry(center_x + 40, top_y, image_size, image_size)
         self.ref_map.get("1P秘卷").hide()
@@ -322,11 +334,13 @@ class 根窗口(QMainWindow):
 
         # 添加常驻标签
         self.创建常驻标签()
-
-        self.关于按钮 = self.按钮批量创建(self.自定义设置["关于按钮"], lambda: self.关于窗口(get_real_path("files/收款码2.png")))
+        self.关于按钮 = self.按钮批量创建(
+            self.自定义设置["关于按钮"], lambda: self.关于窗口(get_real_path("files/收款码2.png")))
         self.设置按钮 = self.按钮批量创建(self.自定义设置["设置按钮"], self.SheZhiJieMian)
-        self.左方按钮 = self.按钮批量创建(self.自定义设置["左方按钮"], lambda: self._on_fight_start())
-        self.右方按钮 = self.按钮批量创建(self.自定义设置["右方按钮"], lambda: self._on_fight_restart())
+        self.左方按钮 = self.按钮批量创建(
+            self.自定义设置["左方按钮"], lambda: self._on_fight_start())
+        self.右方按钮 = self.按钮批量创建(
+            self.自定义设置["右方按钮"], lambda: self._on_fight_restart())
         self.关闭按钮 = self.按钮批量创建(self.自定义设置["关闭按钮"], lambda: self.终章())
         self.教程按钮 = self.按钮批量创建(self.自定义设置["教程按钮"], lambda: self.教程界面())
 
@@ -360,18 +374,24 @@ class 根窗口(QMainWindow):
 
         # 定义文本内容列表（简化版）
         文本内容列表 = [
-            ('<span style="color: #72E692;">唯一作者ID:</span> <span style="color: #000000;">凤灯幽夜</span>',
-            20),
-            ('<span style="color: #E672C6;">Bili_Uid:</span> <span style="color: #000000;">11898940</span>',
-            20),
-            ('<span style="color: #45B7D1;">讨论群:</span> <span style="color: #000000;">548419960</span>',
-            20),
-            ('<span style="color: #9B59B6;">版本:</span> <span style="color: #000000;">V4.8.0</span>',
-            20),
-            ('<span style="color: #009C94;">Lofter/Pixiv:</span> <span style="color: #000000;">凤灯幽夜</span>',
-            20),
-            ('<span style="color: #FFA04A;">特别鸣谢,自软件发布以来259天的唯一打赏:</span> <span style="color: #FFA04A;">来自[咖啡豆浆]的[20元]</span>',
-            20)
+            (
+                '<span style="color: #72E692;">唯一作者ID:</span> <span style="color: #000000;">凤灯幽夜</span>',
+                20),
+            (
+                '<span style="color: #E672C6;">Bili_Uid:</span> <span style="color: #000000;">11898940</span>',
+                20),
+            (
+                '<span style="color: #45B7D1;">讨论群:</span> <span style="color: #000000;">548419960</span>',
+                20),
+            (
+                '<span style="color: #9B59B6;">版本:</span> <span style="color: #000000;">V4.8.0</span>',
+                20),
+            (
+                '<span style="color: #009C94;">Lofter/Pixiv:</span> <span style="color: #000000;">凤灯幽夜</span>',
+                20),
+            (
+                '<span style="color: #FFA04A;">特别鸣谢,自软件发布以来259天的唯一打赏:</span> <span style="color: #FFA04A;">来自[咖啡豆浆]的[20元]</span>',
+                20)
         ]
 
         # 批量创建并添加文本标签
@@ -397,14 +417,17 @@ class 根窗口(QMainWindow):
                 self.设置界面 = QWidget()
                 self.设置界面.setWindowTitle("设置界面")
                 self.设置界面.setGeometry(*self.自定义设置["设置界面几何"])
-                self.设置界面.setFixedSize(self.自定义设置["设置界面几何"][2], self.自定义设置["设置界面几何"][3])  # 固定为初始大小
+                self.设置界面.setFixedSize(
+                    self.自定义设置["设置界面几何"][2],
+                    self.自定义设置["设置界面几何"][3])  # 固定为初始大小
                 self.设置窗口图标随机(self.设置界面, get_real_path("files/icon"))
                 self.宁次图片标签 = QLabel(self.设置界面)
                 self.宁次图片标签.setGeometry(*self.自定义设置["宁次标签几何"])
                 宁次基础图片 = QPixmap(get_real_path("files/柔拳法_忍战宁次.png"))
-                宁次修改图片 = 宁次基础图片.scaled(self.自定义设置["宁次标签图片大小"][0], self.自定义设置["宁次标签图片大小"][1],
-                                                   Qt.AspectRatioMode.KeepAspectRatio,
-                                                   Qt.TransformationMode.SmoothTransformation)
+                宁次修改图片 = 宁次基础图片.scaled(
+                    self.自定义设置["宁次标签图片大小"][0], self.自定义设置["宁次标签图片大小"][1],
+                    Qt.AspectRatioMode.KeepAspectRatio,
+                    Qt.TransformationMode.SmoothTransformation)
                 self.宁次图片标签.setPixmap(宁次修改图片)
 
                 self.点穴开关 = QPushButton("目押点穴", self.设置界面)
@@ -457,7 +480,7 @@ class 根窗口(QMainWindow):
                     f"background-color: #FFFFFF;color: #693C71;font-size: {self.自定义设置['设置窗口字体大小']};border: {self.自定义设置['设置窗口边缘像素']} solid #693C71;"
                 )
                 self.范围显示按钮.clicked.connect(
-                    lambda: self.TuPianXianShi(QPixmap(get_real_path("files/X轴范围显示.png"))))
+                    lambda: self._control_range_window_show())
                 self.范围显示标签 = QLabel(self.设置界面)
                 self.范围显示标签.setGeometry(*self.自定义设置["范围标签几何"])
                 范围显示基础图片 = QPixmap(get_real_path("files/范围显示.png"))
@@ -490,10 +513,15 @@ class 根窗口(QMainWindow):
                 init_resolution = self.fight_info.get_config("默认分辨率")
                 self.分辨率下拉框.setCurrentIndex(resolution_index_dic[init_resolution])
                 # 给Screen和FightInformationUpdate里面的识别区域初始化
-                self.screen.resolution = (self.resolutions[init_resolution]["width"], self.resolutions[init_resolution]["height"])
-                self.fight_info_update.fight_status_templates = self.resolutions[init_resolution]["fight_status_templates"]
+                resolution_tuple = (
+                    self.resolutions[init_resolution]["width"],
+                    self.resolutions[init_resolution]["height"])
+                self.screen.resolution = resolution_tuple
+                self.fight_info_update.fight_status_templates = self.resolutions[init_resolution][
+                    "fight_status_templates"]
                 self.fight_info_update.preprocess_templates()
-                self.fight_info_update.roi_dic = self.resolutions[init_resolution]["roi_dic"][self.fight_info.get_config("默认模式")]
+                self.fight_info_update.roi_dic = self.resolutions[init_resolution]["roi_dic"][
+                    self.fight_info.get_config("默认模式")]
                 self.分辨率下拉框.currentTextChanged.connect(self.on_resolution_changed)
 
                 # ============= 新增截图间隔设置区域 =============
@@ -572,10 +600,15 @@ class 根窗口(QMainWindow):
                 self.screen.bool_window_error = True
                 self.screen.hwnd = 0
             # 修改Screen和FightInformationUpdate里面的模版
-            self.screen.resolution = (self.resolutions[resolution]["width"], self.resolutions[resolution]["height"])
-            self.fight_info_update.fight_status_templates = self.resolutions[resolution]["fight_status_templates"]
+            resolution_tuple = (
+                self.resolutions[resolution]["width"],
+                self.resolutions[resolution]["height"])
+            self.screen.resolution = resolution_tuple
+            self.fight_info_update.fight_status_templates = self.resolutions[resolution][
+                "fight_status_templates"]
             self.fight_info_update.preprocess_templates()
-            self.fight_info_update.roi_dic = self.resolutions[resolution]["roi_dic"][self.fight_info.get_config("默认模式")]
+            self.fight_info_update.roi_dic = self.resolutions[resolution]["roi_dic"][
+                self.fight_info.get_config("默认模式")]
             if not self.screen.running:
                 self.bus.publish(FIGHT_STOP)
                 # 启动系统
@@ -780,8 +813,9 @@ class 根窗口(QMainWindow):
             新的尺寸 = QSize(新的宽度, 新的高度)
 
             # 设置背景标签的大小和位置
-            self.背景标签.setGeometry(self.自定义设置["动态背景X轴偏移"], self.自定义设置["动态背景Y轴偏移"], 新的宽度,
-                                      新的高度)
+            self.背景标签.setGeometry(
+                self.自定义设置["动态背景X轴偏移"], self.自定义设置["动态背景Y轴偏移"], 新的宽度,
+                新的高度)
 
             # 关键改进：启用平滑缩放
             self.背景标签.setScaledContents(True)
@@ -821,8 +855,9 @@ class 根窗口(QMainWindow):
                 Qt.TransformationMode.SmoothTransformation)
 
             # 设置背景标签的大小和位置
-            self.背景标签.setGeometry(self.自定义设置["静态背景X轴偏移"], self.自定义设置["静态背景Y轴偏移"], 新的宽度,
-                                      新的高度)
+            self.背景标签.setGeometry(
+                self.自定义设置["静态背景X轴偏移"], self.自定义设置["静态背景Y轴偏移"], 新的宽度,
+                新的高度)
 
             # 设置背景图片
             self.背景标签.setPixmap(背景图片)
@@ -845,7 +880,8 @@ class 根窗口(QMainWindow):
                 f"background-color: #FFFFFF;color: #E45F1B;font-size: {self.自定义设置['设置窗口字体大小']};border: {self.自定义设置['设置窗口边缘像素']} solid #E45F1B;"
             )
             self.fight_info.set_config("默认模式", "训练营")
-            self.fight_info_update.roi_dic = self.resolutions[self.fight_info.get_config("默认分辨率")]["roi_dic"]["训练营"]
+            self.fight_info_update.roi_dic = \
+                self.resolutions[self.fight_info.get_config("默认分辨率")]["roi_dic"]["训练营"]
         elif self.fight_info.get_config("默认模式") == "训练营":
             模式切换基础图片 = QPixmap(get_real_path("files/决斗场设置.png"))
             模式切换修改图片 = 模式切换基础图片.scaled(
@@ -858,12 +894,10 @@ class 根窗口(QMainWindow):
                 f"background-color: #FFFFFF;color: #5ACD32;font-size: {self.自定义设置['设置窗口字体大小']};border: {self.自定义设置['设置窗口边缘像素']} solid #5ACD32;"
             )
             self.fight_info.set_config("默认模式", "决斗场")
-            self.fight_info_update.roi_dic = self.resolutions[self.fight_info.get_config("默认分辨率")]["roi_dic"]["决斗场"]
+            self.fight_info_update.roi_dic = \
+                self.resolutions[self.fight_info.get_config("默认分辨率")]["roi_dic"]["决斗场"]
 
-    def TuPianXianShi(self, 图片路径):
-        if hasattr(self, '图片窗口') and self.图片窗口 is not None:
-            self.图片窗口.close()  # 关闭现有窗口
-
+    def _create_range_window(self, 图片路径):
         # 创建无边框、置顶、透明背景的窗口
         self.图片窗口 = QWidget()
         self.图片窗口.setWindowFlags(
@@ -893,8 +927,13 @@ class 根窗口(QMainWindow):
         # self.图片标签.setPixmap(图片)
         self.图片标签.setPixmap(图片.scaled(width, height, Qt.AspectRatioMode.KeepAspectRatio))
 
-        # 显示窗口
-        self.图片窗口.show()
+    def _control_range_window_show(self):
+        self._bool_show_range_window = not self._bool_show_range_window
+        if self._bool_show_range_window:
+            self._create_range_window(QPixmap(get_real_path("files/X轴范围显示.png")))
+            self.图片窗口.show()
+        else:
+            self.图片窗口.destroy()
 
     def DianXueKaiGuan(self):
         try:
@@ -936,7 +975,8 @@ class 根窗口(QMainWindow):
         右标签文本 = "本软件纯免费"
 
         self.ref_map["常驻标签左"] = QLabel(self)
-        self.ref_map["常驻标签左"].setGeometry(左标签位置[0], 左标签位置[1], 左标签大小[0], 左标签大小[1])
+        self.ref_map["常驻标签左"].setGeometry(
+            左标签位置[0], 左标签位置[1], 左标签大小[0], 左标签大小[1])
         self.ref_map["常驻标签左"].setText(左标签文本)
         self.ref_map["常驻标签左"].setFont(QFont(标签字体, 标签字号))
         # 设置左侧标签样式
@@ -954,7 +994,8 @@ class 根窗口(QMainWindow):
         self.ref_map["常驻标签左"].setGraphicsEffect(常驻标签左透明效果)
         # 创建右侧常驻标签
         self.ref_map["常驻标签右"] = QLabel(self)
-        self.ref_map["常驻标签右"].setGeometry(右标签位置[0], 右标签位置[1], 右标签大小[0], 右标签大小[1])
+        self.ref_map["常驻标签右"].setGeometry(
+            右标签位置[0], 右标签位置[1], 右标签大小[0], 右标签大小[1])
         self.ref_map["常驻标签右"].setText(右标签文本)
         self.ref_map["常驻标签右"].setFont(QFont(标签字体, 标签字号))
         # 设置右侧标签样式
@@ -1137,27 +1178,27 @@ class 根窗口(QMainWindow):
             清空指定方位(self.ref_map.get("左侧倒计时"))
             清空指定方位(self.ref_map.get("右侧倒计时"))
 
-    def mousePressEvent(self, 事件):
+    def mousePressEvent(self, event):
         """鼠标按下事件"""
-        if 事件.button() == Qt.MouseButton.LeftButton:
+        if event.button() == Qt.MouseButton.LeftButton:
             # 记录鼠标按下时的位置
-            self.拖动位置 = 事件.globalPosition().toPoint() - self.frameGeometry(
+            self.拖动位置 = event.globalPosition().toPoint() - self.frameGeometry(
             ).topLeft()
-            事件.accept()
+            event.accept()
 
-    def mouseMoveEvent(self, 事件):
+    def mouseMoveEvent(self, event):
         """鼠标移动事件"""
-        if 事件.buttons() == Qt.MouseButton.LeftButton and self.拖动位置 is not None:
+        if event.buttons() == Qt.MouseButton.LeftButton and self.拖动位置 is not None:
             # 计算新位置并移动窗口
-            self.move(事件.globalPosition().toPoint() - self.拖动位置)
-            事件.accept()
+            self.move(event.globalPosition().toPoint() - self.拖动位置)
+            event.accept()
 
-    def mouseReleaseEvent(self, 事件):
+    def mouseReleaseEvent(self, event):
         """鼠标释放事件"""
-        if 事件.button() == Qt.MouseButton.LeftButton:
+        if event.button() == Qt.MouseButton.LeftButton:
             # 重置拖动位置
             self.拖动位置 = None
-            事件.accept()
+            event.accept()
 
 
 def 触发_左键短按(坐标):

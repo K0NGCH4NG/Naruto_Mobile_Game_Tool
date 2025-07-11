@@ -206,16 +206,32 @@ class Screen:
                         'screen_time': screen_time
                     }
                 )
+            except ValueError as e:
+                self.logger.error(f"截屏过程中发生错误: {e}")
+                self.bool_window_error = True
+                print(f"模拟器窗口超出屏幕边界", end="\r")
+                self.publish_screen_done(
+                    start,
+                    {
+                        'screen': None,
+                    }
+                )
             except Exception as e:
                 self.logger.error(f"截屏过程中发生错误: {e}")
                 self.publish_screen_done(
                     start,
                     {
-                        'screen': self.screen,
+                        'screen': None,
                     }
                 )
         except Exception as e:
             self.logger.error(f"截屏定位窗口过程中发生错误: {e}")
+            self.publish_screen_done(
+                start,
+                {
+                    'screen': None,
+                }
+            )
 
     def publish_screen_done(self, start, data):
         elapsed_time = (time.perf_counter() - start) * 1000  # 计算截图花费的时间（毫秒）

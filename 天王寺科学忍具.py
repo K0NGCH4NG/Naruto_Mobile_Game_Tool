@@ -259,7 +259,7 @@ class 根窗口(QMainWindow):
         self.key_press_signal.connect(self.handle_key_press)
         self.bus = Bus()
         self.fight_info = FightInformation()
-        self.monitor = KM_Monitor(self.bus, self.fight_info, self.resolutions, self.key_press_signal)
+        self.monitor = KM_Monitor(self.bus, self.fight_info, self.key_press_signal)
         self.monitor.start()
         self.screen = Screen(self.bus, self.fight_info)
         self.screen.screen_interval = self.fight_info.get_config("默认截图间隔")

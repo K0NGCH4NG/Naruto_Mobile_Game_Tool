@@ -193,12 +193,17 @@ class FightInformationUpdate:
                         'end_time': end_time
                     })
                 if result[1] == "保存比赛":
+                    self.logger.debug("识别到保存按钮")
                     if self.fight_info.get_config("回放开关") and not self.bool_click_record:
                         # 在这里补充操纵鼠标点击屏幕回放位置的功能
-                        self.bus.publish(MOUSE_CLICK,
-                                         {
-                                             'type': "RECORD"
-                                         })
+                        data = {
+                            'type': "RECORD",
+                            'click_position':
+                                self.fight_status_templates["保存比赛"][
+                                    "click_position"]
+                        }
+                        self.bus.publish(MOUSE_CLICK, data)
+                        self.logger.debug(f"发布按钮点击事件,{data}")
                         self.bool_click_record = True
                     pass
                 return

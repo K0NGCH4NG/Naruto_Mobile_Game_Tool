@@ -14,11 +14,10 @@ MOUSE_CLICK = "MOUSE_CLICK"
 
 
 class KM_Monitor:
-    def __init__(self, bus: Bus, fight_info: FightInformation, resulutions: Dict, key_press_signal):
+    def __init__(self, bus: Bus, fight_info: FightInformation, key_press_signal):
         self.logger = logging.getLogger(self.__class__.__name__)
         self.bus = bus
         self.fight_info = fight_info
-        self.resolutions = resulutions
         self.key_press_signal = key_press_signal
         self._active = False
         self.listen_keys = [
@@ -112,8 +111,7 @@ class KM_Monitor:
             if type == "RECORD":
                 left, top, right, bottom = self.fight_info.get_config("窗口Rect")
                 width, height = self.fight_info.get_config("默认分辨率").split("x")
-                click_position = self.resolutions[self.fight_info.get_config("默认分辨率")][
-                    "fight_status_templates"]["保存比赛"]["click_position"]
+                click_position = data.get('click_position')
                 self._click_and_return(click_position, 1, (
                     left, bottom - height))
 

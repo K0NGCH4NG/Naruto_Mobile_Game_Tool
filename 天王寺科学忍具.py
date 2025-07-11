@@ -269,7 +269,7 @@ class 根窗口(QMainWindow):
             self.resolutions[init_resolution]["width"],
             self.resolutions[init_resolution]["height"])
         self.screen.resolution = resolution_tuple
-        self.fight_info_update = FightInformationUpdate(self.bus, self.fight_info, self.resolutions,self.fight_over_signal)
+        self.fight_info_update = FightInformationUpdate(self.bus, self.fight_info, self.resolutions, self.fight_over_signal)
         self.judge = Judge(self.bus, self.fight_info, self.countdown_signal)
 
     def handle_count_down(self, data: Dict):
@@ -533,6 +533,22 @@ class 根窗口(QMainWindow):
                 self.截图间隔输入框.setToolTip("截图操作之间的间隔时间，单位为毫秒")
                 self.截图间隔输入框.textChanged.connect(self._on_screenshot_interval_changed)
 
+                # ============= 新增自动保存回放设置区域 =============
+
+                self.保存回放按钮 = QPushButton("已开启" if self.fight_info.get_config("回放开关") else "已关闭", self.设置界面)
+                self.保存回放按钮.setGeometry(*self.自定义设置["保存回放按钮几何"])
+                self.保存回放按钮.setStyleSheet(
+                    f"background-color: #FFFFFF;color: #693C71;font-size: {self.自定义设置['设置窗口字体大小']};border: {self.自定义设置['设置窗口边缘像素']} solid #693C71;"
+                )
+                self.保存回放按钮.clicked.connect(
+                    lambda: self._on_auto_record_changed())
+                self.保存回放标签 = QLabel(self.设置界面)
+                self.保存回放标签.setText("保存回放")
+                self.保存回放标签.setGeometry(*self.自定义设置["保存回放标签几何"])
+                self.保存回放标签.setStyleSheet(
+                    f"background-color: #FFFFFF;color: #000000;font-size: 16px;border: {self.自定义设置['设置窗口边缘像素']} solid #808080;"
+                )
+
         except Exception as e:
             self.logger.error(f"{e}")
         # 切换窗口的显示状态
@@ -540,6 +556,16 @@ class 根窗口(QMainWindow):
             self.设置界面.hide()  # 如果窗口可见，则隐藏
         else:
             self.设置界面.show()  # 如果窗口不可见，则显示
+
+    def _on_auto_record_changed(self):
+        if self.fight_info.get_config("回放开关") == 0:
+            self.logger.info("开启")
+            self.保存回放按钮.setText("已开启")
+            self.fight_info.set_config("回放开关", 1)
+        elif self.fight_info.get_config("回放开关") == 1:
+            self.保存回放按钮.setText("已关闭")
+            self.logger.info("关闭")
+            self.fight_info.set_config("回放开关", 0)
 
     def generate_resolution_index_dic(self):
         """根据 self.resolutions.keys() 生成分辨率索引字典"""

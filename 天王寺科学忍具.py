@@ -424,7 +424,7 @@ class 根窗口(QMainWindow):
                     Qt.TransformationMode.SmoothTransformation)
                 self.宁次图片标签.setPixmap(宁次修改图片)
 
-                self.点穴开关 = QPushButton("目押点穴", self.设置界面)
+                self.点穴开关 = QPushButton("已开启" if self.fight_info.get_config("点穴开关") else "已关闭", self.设置界面)
                 self.点穴开关.setGeometry(*self.自定义设置["宁次按钮几何"])
                 self.点穴开关.setStyleSheet(
                     f"background-color: #FFFFFF;color: #000000;font-size: {self.自定义设置['设置窗口字体大小']};border: {self.自定义设置['设置窗口边缘像素']} solid #FF2EE7;"

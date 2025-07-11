@@ -512,7 +512,7 @@ class 根窗口(QMainWindow):
                     self.resolutions[init_resolution]["height"])
                 self.screen.resolution = resolution_tuple
                 self.fight_info_update.init_templates_and_roi_dic()
-                self.分辨率下拉框.currentTextChanged.connect(self.on_resolution_changed)
+                self.分辨率下拉框.currentTextChanged.connect(lambda resolution:self.on_resolution_changed(resolution))
 
                 # ============= 新增截图间隔设置区域 =============
                 # 截图间隔标签
@@ -650,6 +650,7 @@ class 根窗口(QMainWindow):
         except ValueError:
             # 输入非数字字符时的处理
             self.截图间隔输入框.setText("50")  # 恢复默认值
+            self.screen.screen_interval = 50
             self.logger.debug(f"输入的间隔无效，截图间隔已恢复为50毫秒")
 
     def 添加倒计时标签(self, 方位, trigger_time=None, duration=0):

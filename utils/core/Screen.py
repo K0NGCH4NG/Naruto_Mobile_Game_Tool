@@ -216,7 +216,8 @@ class Screen:
                     }
                 )
             except Exception as e:
-                self.logger.error(f"截屏过程中发生错误: {e}")
+
+                self.logger.error(f"截屏过程中发生{type(e)}错误: {e}")
                 self.publish_screen_done(
                     start,
                     {

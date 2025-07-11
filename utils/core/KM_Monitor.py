@@ -1,7 +1,8 @@
 import logging
 import time
 from threading import Thread, Lock
-
+from typing import Dict, Tuple
+import mouse
 from pynput import keyboard
 
 from utils.core.Bus import Bus
@@ -9,12 +10,15 @@ from utils.core.FightInformation import FightInformation
 
 COUNTDOWN_EVENT = "COUNTDOWN_EVENT"
 CHECK_IDENTIFICATION_POINTS = "CHECK_IDENTIFICATION_POINTS"
+MOUSE_CLICK = "MOUSE_CLICK"
+
 
 class KM_Monitor:
-    def __init__(self, bus: Bus, fight_info: FightInformation, key_press_signal):
+    def __init__(self, bus: Bus, fight_info: FightInformation, resulutions: Dict, key_press_signal):
         self.logger = logging.getLogger(self.__class__.__name__)
         self.bus = bus
         self.fight_info = fight_info
+        self.resolutions = resulutions
         self.key_press_signal = key_press_signal
         self._active = False
         self.listen_keys = [
@@ -23,7 +27,6 @@ class KM_Monitor:
             self.fight_info.get_config("模拟右侧替身按键"),
             self.fight_info.get_config("清空倒计时按键"),
             self.fight_info.get_config("展示当前识别点位"),
-
         ]
         # 状态跟踪
         self.active_keys = set()  # 当前按下的按键集合
@@ -38,6 +41,7 @@ class KM_Monitor:
         # self.mouse_listener = mouse.Listener(
         #     on_click=self._on_mouse_click
         # )
+        self.bus.subscribe("MOUSE_CLICK", self._handle_mouse_click)
 
     def start(self):
         """启动监听线程"""
@@ -101,13 +105,24 @@ class KM_Monitor:
                     'duration': 14.85,
                 }
             )
-        # self.bus.publish(COUNTDOWN_EVENT, {
-        #     'type': 'USER',
-        #     'target': '用户自定义倒计时',
-        #     'time': 15.00,
-        #     'add': 0.4416,
-        #     'time_perf': trigger_time,
-        # })
+
+    def _handle_mouse_click(self, data: Dict):
+        type = data.get('type', None)
+        if type:
+            if type == "RECORD":
+                left, top, right, bottom = self.fight_info.get_config("窗口Rect")
+                width, height = self.fight_info.get_config("默认分辨率").split("x")
+                click_position = self.resolutions[self.fight_info.get_config("默认分辨率")][
+                    "fight_status_templates"]["保存比赛"]["click_position"]
+                self._click_and_return(click_position, 1, (
+                    left, bottom - height))
+
+    def _click_and_return(self, click_positon: Tuple, click_times=1, base_position=(0, 0)):
+        pre_position = mouse.get_position()
+        mouse.move(base_position[0] + click_positon[0], base_position[1] + click_positon[1])
+        for i in range(click_times):
+            mouse.click()
+        mouse.move(pre_position[0], pre_position[1])
 
     # def _on_mouse_click(self, x, y, button, pressed):
     #     """鼠标点击回调"""
@@ -136,6 +151,7 @@ class KM_Monitor:
     #         'y': y,
     #         'event': 'click'
     #     })
+
 
 if __name__ == "__main__":
     bus = Bus()

@@ -165,7 +165,7 @@ class Screen:
                     # self.logger.debug(f"窗口宽度：{(right - left)}（预期：{self.resolution[0]}）")
                     self.bool_window_error = True
                     print(f"游戏窗口现在宽度：{(right - left)},预期：{self.resolution[0]}", end="\r")
-                    print(" " * 100, end="\r")
+                    # print(" " * 100, end="\r")
                     # self.bus.publish(UI_UPDATE, {
                     #     'type': "WINDOW",
                     #     'text': f"窗口宽度：{(right - left)}（预期：{self.resolution[0]}）",

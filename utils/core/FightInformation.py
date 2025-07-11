@@ -6,6 +6,7 @@ from typing import Dict, Any
 
 from StaticFunctions import get_real_path
 
+
 class FightInformation:
     def __init__(self):
         self.logger = logging.getLogger(self.__class__.__name__)
@@ -15,7 +16,8 @@ class FightInformation:
         # 此下皆是调试参数
         self.setting_dics: Dict[str, Dict[str, Any]] = {
             # 基本是程序自定的东西，不建议用户修改
-            "查找窗口": {'lock': threading.Lock(), 'data': ['Qt5156QWindowIcon', 'LDPlayerMainFrame']},
+            "查找窗口": {'lock': threading.Lock(),
+                'data': ['Qt5156QWindowIcon', 'LDPlayerMainFrame']},
             "关闭程序按键": {'lock': threading.Lock(), 'data': 'x'},
             "模拟左侧替身按键": {'lock': threading.Lock(), 'data': 'z'},
             "模拟右侧替身按键": {'lock': threading.Lock(), 'data': 'c'},

@@ -53,6 +53,13 @@
                 "roi": [608, 723, 613, 677],
                 "threshold": 0.6,
                 "fight_status_code": 1
+            },
+            "保存比赛": {
+                "path": "src\\img\\Fight\\Status\\",
+                "roi": [1173, 1374, 11, 54],
+                "threshold": 0.7,
+                "fight_status_code": 1,
+                "click_position": [1289,39]
             }
         },
         "roi_dic": {
@@ -152,6 +159,13 @@
                 "roi": [608, 723, 613, 677],
                 "threshold": 0.6,
                 "fight_status_code": 1
+            },
+            "保存比赛": {
+                "path": "src\\img\\Fight\\Status\\",
+                "roi": [1173, 1374, 11, 54],
+                "threshold": 0.7,
+                "fight_status_code": 1,
+                "click_position": [1289,39]
             }
         },
         "roi_dic": {
@@ -252,11 +266,12 @@
                 "threshold": 0.6,
                 "fight_status_code": 1
             },
-            "举报反馈": {
+            "保存比赛": {
                 "path": "src\\img\\Fight\\Status\\",
-                "roi": [956, 1161, 11, 54],
-                "threshold": 0.6,
-                "fight_status_code": 1
+                "roi": [1173, 1374, 11, 54],
+                "threshold": 0.7,
+                "fight_status_code": 1,
+                "click_position": [1289,39]
             }
         },
         "roi_dic": {
@@ -356,6 +371,13 @@
                 "roi": [608, 723, 613, 677],
                 "threshold": 0.6,
                 "fight_status_code": 1
+            },
+            "保存比赛": {
+                "path": "src\\img\\Fight\\Status\\",
+                "roi": [1173, 1374, 11, 54],
+                "threshold": 0.7,
+                "fight_status_code": 1,
+                "click_position": [1289,39]
             }
         },
         "roi_dic": {

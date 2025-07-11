@@ -259,7 +259,7 @@ class 根窗口(QMainWindow):
         self.key_press_signal.connect(self.handle_key_press)
         self.bus = Bus()
         self.fight_info = FightInformation()
-        self.monitor = KM_Monitor(self.bus, self.fight_info, self.key_press_signal)
+        self.monitor = KM_Monitor(self.bus, self.fight_info, self.resolutions, self.key_press_signal)
         self.monitor.start()
         self.screen = Screen(self.bus, self.fight_info)
         self.screen.screen_interval = self.fight_info.get_config("默认截图间隔")
@@ -269,13 +269,7 @@ class 根窗口(QMainWindow):
             self.resolutions[init_resolution]["width"],
             self.resolutions[init_resolution]["height"])
         self.screen.resolution = resolution_tuple
-        self.fight_info_update = FightInformationUpdate(self.bus, self.fight_over_signal)
-        self.fight_info_update.fight_status_templates = \
-            self.resolutions[self.fight_info.get_config("默认分辨率")]["fight_status_templates"]
-        self.fight_info_update.preprocess_templates()
-        self.fight_info_update.roi_dic = \
-            self.resolutions[self.fight_info.get_config("默认分辨率")]["roi_dic"][
-                self.fight_info.get_config("默认模式")]
+        self.fight_info_update = FightInformationUpdate(self.bus, self.fight_info, self.resolutions,self.fight_over_signal)
         self.judge = Judge(self.bus, self.fight_info, self.countdown_signal)
 
     def handle_count_down(self, data: Dict):
@@ -517,11 +511,7 @@ class 根窗口(QMainWindow):
                     self.resolutions[init_resolution]["width"],
                     self.resolutions[init_resolution]["height"])
                 self.screen.resolution = resolution_tuple
-                self.fight_info_update.fight_status_templates = self.resolutions[init_resolution][
-                    "fight_status_templates"]
-                self.fight_info_update.preprocess_templates()
-                self.fight_info_update.roi_dic = self.resolutions[init_resolution]["roi_dic"][
-                    self.fight_info.get_config("默认模式")]
+                self.fight_info_update.init_templates_and_roi_dic()
                 self.分辨率下拉框.currentTextChanged.connect(self.on_resolution_changed)
 
                 # ============= 新增截图间隔设置区域 =============
@@ -604,11 +594,7 @@ class 根窗口(QMainWindow):
                 self.resolutions[resolution]["width"],
                 self.resolutions[resolution]["height"])
             self.screen.resolution = resolution_tuple
-            self.fight_info_update.fight_status_templates = self.resolutions[resolution][
-                "fight_status_templates"]
-            self.fight_info_update.preprocess_templates()
-            self.fight_info_update.roi_dic = self.resolutions[resolution]["roi_dic"][
-                self.fight_info.get_config("默认模式")]
+            self.fight_info_update.init_templates_and_roi_dic()
             if not self.screen.running:
                 self.bus.publish(FIGHT_STOP)
                 # 启动系统

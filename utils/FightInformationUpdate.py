@@ -8,6 +8,7 @@ import numpy as np
 
 from StaticFunctions import resource_path
 from utils.core.Bus import Bus
+from utils.core.FightInformation import FightInformation
 from utils.core.ImageMatch import ImageMatch
 from utils.core.Screen import extract_diamond_region
 
@@ -24,9 +25,11 @@ MOUSE_CLICK = "MOUSE_CLICK"
 
 class FightInformationUpdate:
 
-    def __init__(self, bus: Bus, fight_over_signal):
+    def __init__(self, bus: Bus, fight_info: FightInformation, resolutions: Dict, fight_over_signal):
         self.logger = logging.getLogger(self.__class__.__name__)
         self.bus = bus  # 添加总线引用
+        self.fight_info = fight_info
+        self.resolutions = resolutions
         self.matcher = ImageMatch.from_cache(resource_path("src/model/IM.pkl"))
         self.screen = None
         # 订阅事件
@@ -43,10 +46,11 @@ class FightInformationUpdate:
         # 定义各个判断函数所用的区域
         self.roi_dic = None
         # # 预处理模板
-        # self.preprocess_templates()
+        self.init_templates_and_roi_dic()
 
         self.last_vs_time = None
         self.vs_type = None
+        self.bool_click_record = False
         # 1代表识别到Winner，等待开始下一次战斗
         # 2代表识别到战斗，等待Winner结束
         self.fight_status_code = 1
@@ -61,9 +65,13 @@ class FightInformationUpdate:
         self.match_ninja_time = None
         self.logger.debug("初始化完成...")
 
-    def preprocess_templates(self):
+    def init_templates_and_roi_dic(self):
         """预处理模板图像"""
         self.logger.debug("预处理模版图像：")
+        self.fight_status_templates = self.resolutions[self.fight_info.get_config("默认分辨率")][
+            "fight_status_templates"]
+        self.roi_dic = self.resolutions[self.fight_info.get_config("默认分辨率")][
+            "roi_dic"][self.fight_info.get_config("默认模式")]
         for key, template in self.fight_status_templates.items():
             try:
                 template_path = resource_path(f"{template['path']}{key}.png")
@@ -100,9 +108,9 @@ class FightInformationUpdate:
         future_dict = {}  # 用于存储线程任务和对应的任务名称
         futures = []  # 用于等待的Future列表
         if self.fight_status_code == 1:
-            # 战斗状态码是1说明上局战斗已经结束，需要识别60开始战斗/识别"举报反馈"按钮，进行自动保存回放
+            # 战斗状态码是1说明上局战斗已经结束，需要识别60开始战斗/识别"保存比赛"按钮，进行自动保存回放
             fight_status_code = self.executor.submit(
-                self.recognize_fight_status, screen_gray, ["60", "举报反馈"])
+                self.recognize_fight_status, screen_gray, ["60", "保存比赛"])
             future_dict["对局状态"] = fight_status_code
             futures.append(fight_status_code)
 
@@ -162,6 +170,7 @@ class FightInformationUpdate:
         if result:
             if result[0] == 2:
                 # 检测到了60,要截取密卷刷新UI了
+                self.bool_click_record = False
                 self.last_vs_time = time.perf_counter()
                 self.vs_type = result[1]
                 self.match_ninja_time = time.perf_counter()
@@ -183,12 +192,14 @@ class FightInformationUpdate:
                     {
                         'end_time': end_time
                     })
-                if result[1] == "举报反馈":
-                    # 在这里补充操纵鼠标点击屏幕回放位置的功能
-                    self.bus.publish(MOUSE_CLICK,
-                                     {
-                                         'type': "RECORD"
-                                     })
+                if result[1] == "保存比赛":
+                    if self.fight_info.get_config("回放开关") and not self.bool_click_record:
+                        # 在这里补充操纵鼠标点击屏幕回放位置的功能
+                        self.bus.publish(MOUSE_CLICK,
+                                         {
+                                             'type': "RECORD"
+                                         })
+                        self.bool_click_record = True
                     pass
                 return
         if self.fight_status_code == 2 and (

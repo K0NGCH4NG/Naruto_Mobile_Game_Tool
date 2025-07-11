@@ -645,12 +645,12 @@ class 根窗口(QMainWindow):
 
             self.fight_info.set_config("默认截图间隔", interval)
             self.screen.screen_interval = interval
-            self.logger.debug(f"截图间隔已更新为 {interval} 毫秒")
 
         except ValueError:
             # 输入非数字字符时的处理
             self.截图间隔输入框.setText("50")  # 恢复默认值
             self.screen.screen_interval = 50
+            self.fight_info.set_config("默认截图间隔", 50)
             self.logger.debug(f"输入的间隔无效，截图间隔已恢复为50毫秒")
 
     def 添加倒计时标签(self, 方位, trigger_time=None, duration=0):

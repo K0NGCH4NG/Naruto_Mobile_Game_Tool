@@ -207,7 +207,6 @@ class Screen:
                     }
                 )
             except ValueError as e:
-                self.logger.error(f"截屏过程中发生错误: {e}")
                 self.bool_window_error = True
                 print(f"模拟器窗口超出屏幕边界", end="\r")
                 self.publish_screen_done(

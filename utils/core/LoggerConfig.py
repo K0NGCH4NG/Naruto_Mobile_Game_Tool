@@ -80,4 +80,4 @@ def setup_logging():
     comtypes_logger = logging.getLogger("comtypes")
     comtypes_logger.setLevel(logging.WARNING)  # 设置为 WARNING 或更高
     comtypes_logger.propagate = False  # 防止传播到根日志器
-    root_logger.info("Logger根记录器初始化完成...")
+    root_logger.info("\n\n\n\nLogger根记录器初始化完成...")

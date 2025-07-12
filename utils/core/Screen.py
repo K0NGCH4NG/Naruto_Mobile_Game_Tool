@@ -95,7 +95,7 @@ class Screen:
         self.fight_info = fight_info
         # self.executor = concurrent.futures.ThreadPoolExecutor(max_workers=1)
         self.camera = dxcam.create(device_idx=0, output_color="BGR")  # returns a DXCamera instance on primary monitor
-        self.camera.start(target_fps=144, video_mode=True)  # Optional argument to capture a region
+        self.camera.start(target_fps=60, video_mode=True)  # Optional argument to capture a region
         # 订阅事件
         self.bus.subscribe(FIGHT_INFORMATION_UPDATE_DONE, self.handle_fight_info_update)
         self.bus.subscribe(JUDGE_DONE, self.handle_fight_info_update)

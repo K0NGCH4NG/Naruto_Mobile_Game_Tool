@@ -511,7 +511,6 @@ class 根窗口(QMainWindow):
                     self.resolutions[init_resolution]["width"],
                     self.resolutions[init_resolution]["height"])
                 self.screen.resolution = resolution_tuple
-                self.fight_info_update.init_templates_and_roi_dic()
                 self.分辨率下拉框.currentTextChanged.connect(lambda resolution:self.on_resolution_changed(resolution))
 
                 # ============= 新增截图间隔设置区域 =============
@@ -549,6 +548,22 @@ class 根窗口(QMainWindow):
                     f"background-color: #FFFFFF;color: #000000;font-size: 16px;border: {self.自定义设置['设置窗口边缘像素']} solid #808080;"
                 )
 
+                # ============= 新增调试模式设置区域 =============
+
+                self.调试模式按钮 = QPushButton("已开启" if self.fight_info.get_config("调试模式") else "已关闭", self.设置界面)
+                self.调试模式按钮.setGeometry(*self.自定义设置["调试模式按钮几何"])
+                self.调试模式按钮.setStyleSheet(
+                    f"background-color: #FFFFFF;color: #693C71;font-size: {self.自定义设置['设置窗口字体大小']};border: {self.自定义设置['设置窗口边缘像素']} solid #693C71;"
+                )
+                self.调试模式按钮.clicked.connect(
+                    lambda: self._on_debug_mode_changed())
+                self.调试模式标签 = QLabel(self.设置界面)
+                self.调试模式标签.setText("调试模式")
+                self.调试模式标签.setGeometry(*self.自定义设置["调试模式标签几何"])
+                self.调试模式标签.setStyleSheet(
+                    f"background-color: #FFFFFF;color: #000000;font-size: 16px;border: {self.自定义设置['设置窗口边缘像素']} solid #800080;"
+                )
+
         except Exception as e:
             self.logger.error(f"{e}")
         # 切换窗口的显示状态
@@ -564,6 +579,13 @@ class 根窗口(QMainWindow):
         elif self.fight_info.get_config("回放开关") == 1:
             self.保存回放按钮.setText("已关闭")
             self.fight_info.set_config("回放开关", 0)
+    def _on_debug_mode_changed(self):
+        if self.fight_info.get_config("调试模式") == 0:
+            self.调试模式按钮.setText("已开启")
+            self.fight_info.set_config("调试模式", 1)
+        elif self.fight_info.get_config("调试模式") == 1:
+            self.调试模式按钮.setText("已关闭")
+            self.fight_info.set_config("调试模式", 0)
 
     def generate_resolution_index_dic(self):
         """根据 self.resolutions.keys() 生成分辨率索引字典"""

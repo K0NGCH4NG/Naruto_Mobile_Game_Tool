@@ -95,7 +95,7 @@ class Screen:
         self.fight_info = fight_info
         # self.executor = concurrent.futures.ThreadPoolExecutor(max_workers=1)
         self.camera = dxcam.create(device_idx=0, output_color="BGR")  # returns a DXCamera instance on primary monitor
-        # self.camera.start(target_fps=60, video_mode=False)  # Optional argument to capture a region
+        self.camera.start(target_fps=144, video_mode=True)  # Optional argument to capture a region
         # 订阅事件
         self.bus.subscribe(FIGHT_INFORMATION_UPDATE_DONE, self.handle_fight_info_update)
         self.bus.subscribe(JUDGE_DONE, self.handle_fight_info_update)
@@ -179,9 +179,11 @@ class Screen:
                     )
                     return
                 screen_time = time.perf_counter()
-                self.screen = self.camera.grab(region=(
-                    left, bottom - self.resolution[1], left + self.resolution[0], bottom))
-                # self.logger.debug(f"[截图耗时] {(time.perf_counter() - start) * 1000:.1f}ms")
+                # self.screen = self.camera.grab(region=(
+                #     left, bottom - self.resolution[1], left + self.resolution[0], bottom))
+                self.screen = self.camera.get_latest_frame()[bottom - self.resolution[1]:bottom, left:left + self.resolution[0]]
+                if self.fight_info.get_config("调试模式"):
+                    self.logger.debug(f"[截图耗时] {(time.perf_counter() - screen_time) * 1000:.1f}ms")
                 if self.bool_window_error:
                     self.bool_window_error = False
                     print(" " * 100, end="\r")
@@ -196,8 +198,6 @@ class Screen:
                 # cv2.imshow("DXCAM", self.screen)
                 # cv2.waitKey(0)
                 # cv2.destroyAllWindows()
-
-                # self.logger.info(f"[{datetime.now().strftime('%Y-%m-%d %H:%M:%S.%f')[:23]}] 截图结束")
 
                 self.publish_screen_done(
                     start,
@@ -236,7 +236,6 @@ class Screen:
     def publish_screen_done(self, start, data):
         elapsed_time = (time.perf_counter() - start) * 1000  # 计算截图花费的时间（毫秒）
         wait_time = self.screen_interval - elapsed_time  # 计算需要等待的时间
-        # self.logger.debug(f"当前截图间隔：{self.screen_interval}ms")
         if wait_time > 0:
             # 触发定时器，线程会在延时后自动发送信号
             self.timer_thread.trigger(wait_time, data)

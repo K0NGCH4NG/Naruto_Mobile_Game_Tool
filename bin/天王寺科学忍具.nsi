@@ -5,7 +5,7 @@ Unicode true
 
 ; HM NIS Edit Wizard helper defines
 !define PRODUCT_NAME "天王寺科学忍具"
-!define PRODUCT_VERSION "5.9.1_x"
+!define PRODUCT_VERSION "5.10.2_x"
 !define PRODUCT_PUBLISHER "凤灯幽夜"
 !define PRODUCT_WEB_SITE "https://github.com/K0NGCH4NG/Naruto_Mobile_Game_Tool/"
 !define PRODUCT_DIR_REGKEY "Software\Microsoft\Windows\CurrentVersion\App Paths\天王寺科学忍具.exe"

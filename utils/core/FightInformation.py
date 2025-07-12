@@ -29,6 +29,8 @@ class FightInformation:
             "默认分辨率": {'lock': threading.Lock(), 'data': "1600x900"},
             "默认截图间隔": {'lock': threading.Lock(), 'data': 50},
             "倒计时秒数": {'lock': threading.Lock(), 'data': 13.5},
+
+            "调试模式": {'lock': threading.Lock(), 'data': 0},
             "回放开关": {'lock': threading.Lock(), 'data': 0},
             "点穴开关": {'lock': threading.Lock(), 'data': 0},
             "默认模式": {'lock': threading.Lock(), 'data': "决斗场"},

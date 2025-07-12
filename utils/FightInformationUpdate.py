@@ -165,6 +165,8 @@ class FightInformationUpdate:
         results = {}
         for key, future in future_dict.items():
             results[key] = future.result()
+        if self.fight_info.get_config("调试模式"):
+            self.logger.debug(f"战斗信息识别结果：{results}")
         result = results["对局状态"]
         # self.logger.debug(f"[更新战斗信息耗时]：{(time.perf_counter() - start) * 1000:.1f}ms")
         if result:
@@ -220,6 +222,8 @@ class FightInformationUpdate:
                 "2P忍者名称": self.ninja_name_2p,
             }
             # self.logger.debug(temp_data)
+            if self.fight_info.get_config("调试模式"):
+                self.logger.debug(f"FIU向Judge发射信号：{temp_data}")
             self.bus.publish(JUDGE_START, temp_data)
         else:
             self.bus.publish(
@@ -285,14 +289,18 @@ class FightInformationUpdate:
                 # 按置信度（元组的第二个元素）降序排列
                 valid_results.sort(key=lambda x: x[1], reverse=True)
                 max_result = valid_results[0]  # 取置信度最大的 result
-                self.logger.debug(f"战斗状态识别结果：[{max_result[0]}] ({max_result[1]:.3f})")
+                if self.fight_info.get_config("调试模式"):
+                    self.logger.debug(f"战斗状态码识别结果：[{max_result[0]}] ({max_result[1]:.3f})")
             if max_result and max_result[1] > self.fight_status_templates[
                 max_result[0]].get("threshold"):
                 fight_status_code = self.fight_status_templates[
                     max_result[0]].get("fight_status_code", 1)
                 self.fight_status_code = fight_status_code
                 if fight_status_code == 1:
-                    self.logger.info(f"胜负已分 [{max_result[1]:.3f}]")
+                    if max_result[0] == "Winner":
+                        self.logger.info(f"胜负已分 [{max_result[1]:.3f}]")
+                    elif max_result[0] == "保存比赛":
+                        self.logger.info(f"保存回放 [{max_result[1]:.3f}]")
                 elif fight_status_code == 2:
                     self.logger.info(f"战斗开始 [{max_result[1]:.3f}]")
                 return fight_status_code, max_result[0]

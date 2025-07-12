@@ -109,6 +109,15 @@ class Screen:
         self.last_find_window_rect = time.perf_counter()
         self.window_rect = None
         self.screen_interval = 50
+        # 获取屏幕原始分辨率
+        HORZRES = 8  # 物理宽度
+        VERTRES = 10  # 物理高度
+        hdc = ctypes.windll.user32.GetDC(None)
+        width = ctypes.windll.gdi32.GetDeviceCaps(hdc, HORZRES)
+        height = ctypes.windll.gdi32.GetDeviceCaps(hdc, VERTRES)
+        ctypes.windll.user32.ReleaseDC(None, hdc)
+        self.origin_resolution = (width, height)
+        self.logger.debug(f"屏幕原始分辨率：{self.origin_resolution}")
         self.logger.debug(f"初始化完成...")
 
     def handle_fight_info_update(self, data: Dict):
@@ -178,10 +187,22 @@ class Screen:
                         }
                     )
                     return
+                if self._invalid_region((bottom - self.resolution[1], bottom, left,
+                left + self.resolution[0])):
+                    self.bool_window_error = True
+                    print(f"模拟器窗口超出屏幕边界", end="\r")
+                    self.publish_screen_done(
+                        start,
+                        {
+                            'screen': None,
+                        }
+                    )
+                    return
                 screen_time = time.perf_counter()
                 # self.screen = self.camera.grab(region=(
                 #     left, bottom - self.resolution[1], left + self.resolution[0], bottom))
-                self.screen = self.camera.get_latest_frame()[bottom - self.resolution[1]:bottom, left:left + self.resolution[0]]
+                self.screen = self.camera.get_latest_frame()[bottom - self.resolution[1]:bottom,
+                left:left + self.resolution[0]]
                 if self.fight_info.get_config("调试模式"):
                     self.logger.debug(f"[截图耗时] {(time.perf_counter() - screen_time) * 1000:.1f}ms")
                 if self.bool_window_error:
@@ -216,7 +237,6 @@ class Screen:
                     }
                 )
             except Exception as e:
-
                 self.logger.error(f"截屏过程中发生{type(e)}错误: {e}")
                 self.publish_screen_done(
                     start,
@@ -280,6 +300,12 @@ class Screen:
             pt_bottom[0],
             pt_bottom[1],
         )
+
+    def _invalid_region(self, region):
+        y1, y2, x1, x2 = region
+        if x1 < 0 or y1 < 0 or x2 > self.origin_resolution[0] or y2 > self.origin_resolution[1]:
+            return True
+        return False
 
 
 def extract_diamond_region(image):
